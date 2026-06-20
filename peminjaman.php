@@ -91,7 +91,6 @@ if ($role === 'admin') {
     $pending_list = $_SESSION['dummy_verifikasi'] ?? [];
     $loans = $_SESSION['dummy_peminjaman'] ?? [];
 } else {
-    // Role User
     if (isset($_SESSION['dummy_verifikasi'])) {
         foreach ($_SESSION['dummy_verifikasi'] as $pending) {
             if ($pending['user_nama'] === $_SESSION['nama']) {
@@ -109,96 +108,108 @@ if ($role === 'admin') {
 }
 ?>
 
-<div class="riwayat-container">
+<div class="riwayat-container" style="padding: 20px 25px;">
 
-    <h3 style="margin-bottom: 15px;">Menunggu Verifikasi</h3>
+    <h3 style="margin-bottom: 15px; font-weight: 800; color: #0f172a;">Menunggu Verifikasi</h3>
     <?php if (empty($pending_list)): ?>
-        <div class="riwayat-card" style="text-align: center;">
-            <p>Tidak ada pengajuan peminjaman baru.</p>
+        <div class="riwayat-card" style="text-align: center; padding: 30px;">
+            <p style="color: #64748b;">Tidak ada pengajuan peminjaman baru.</p>
         </div>
     <?php else: ?>
-        <?php foreach ($pending_list as $pending): ?>
-            <?php $js_pending = json_encode($pending); ?>
-            <div class="riwayat-card" style="margin-bottom: 20px; <?= $role === 'admin' ? 'cursor: pointer;' : '' ?>" <?= $role === 'admin' ? "onclick='openVerifikasiModal(" . htmlspecialchars($js_pending, ENT_QUOTES, "UTF-8") . ")'" : "" ?>>
-                <div style="text-align: center;">
-                    <img src="<?= htmlspecialchars($pending['img']) ?>" style="width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 10px;">
-                </div>
-                <h4><?= htmlspecialchars($pending['alat_nama']) ?></h4>
-                <p>Mahasiswa : <?= htmlspecialchars($pending['user_nama']) ?></p>
-                <p>NIM : <?= htmlspecialchars($pending['user_nim']) ?></p>
-                <p>Tanggal : <?= date('d/m/Y', strtotime($pending['tgl_pinjam'])) ?></p>
-                <p>Jumlah : <?= htmlspecialchars($pending['jumlah']) ?> Unit</p>
-                
-                <?php if ($role === 'admin'): ?>
-                <button class="btn-detail" style="width: 100%; margin-top: 15px; border: none; cursor: pointer;">
-                    Lihat & Verifikasi
-                </button>
-                <?php else: ?>
-                <span class="badge badge-warning" style="margin-top: 10px; display: inline-block;">Diproses Admin</span>
-                <?php endif; ?>
+        <div class="list-ke-bawah-container">
+            <div class="list-header-row">
+                <div>Gambar</div>
+                <div>Nama Alat</div>
+                <div>Peminjam (NIM)</div>
+                <div>Jumlah</div>
+                <div>Status / Aksi</div>
             </div>
-        <?php endforeach; ?>
+            
+            <?php foreach ($pending_list as $pending): ?>
+                <?php $js_pending = json_encode($pending); ?>
+                <div class="list-item-row" style="<?= $role === 'admin' ? 'cursor: pointer;' : '' ?>" <?= $role === 'admin' ? "onclick='openVerifikasiModal(" . htmlspecialchars($js_pending, ENT_QUOTES, "UTF-8") . ")'" : "" ?>>
+                    <div>
+                        <img src="<?= htmlspecialchars($pending['img']) ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    </div>
+                    <div class="data-text" style="font-weight: 700; color: #0f172a;"><?= htmlspecialchars($pending['alat_nama']) ?></div>
+                    <div class="data-text"><?= htmlspecialchars($pending['user_nama']) ?> <span style="color: #64748b; font-size: 12px; display: block;">NIM: <?= htmlspecialchars($pending['user_nim']) ?></span></div>
+                    <div class="data-text"><?= htmlspecialchars($pending['jumlah']) ?> Unit</div>
+                    <div>
+                        <?php if ($role === 'admin'): ?>
+                            <button class="btn-detail-table">Lihat & Verifikasi</button>
+                        <?php else: ?>
+                            <span class="badge badge-warning">Diproses Admin</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 
-    <h3 style="margin-top: 30px; margin-bottom: 15px;">Pinjaman Aktif & Selesai</h3>
+    <h3 style="margin-top: 40px; margin-bottom: 15px; font-weight: 800; color: #0f172a;">Pinjaman Aktif & Selesai</h3>
     <?php if (empty($loans)): ?>
-        <div class="riwayat-card" style="text-align: center;">
-            <p>Tidak ada data peminjaman.</p>
+        <div class="riwayat-card" style="text-align: center; padding: 30px;">
+            <p style="color: #64748b;">Tidak ada data peminjaman.</p>
         </div>
     <?php else: ?>
-        <?php foreach ($loans as $loan): ?>
-            <?php $js_loan = json_encode($loan); ?>
-            <div class="riwayat-card" style="position: relative; margin-bottom: 20px; <?= $role === 'admin' ? 'cursor: pointer;' : '' ?>" <?= $role === 'admin' ? "onclick='openPeminjamanModal(" . htmlspecialchars($js_loan, ENT_QUOTES, "UTF-8") . ")'" : "" ?>>
-                <h4><?= htmlspecialchars($loan['user_nama']) ?></h4>
-                <p>Alat: <?= htmlspecialchars($loan['nama_alat']) ?> (Kode: <?= htmlspecialchars($loan['kode_alat']) ?>)</p>
-                <?php if ($loan['status'] === 'Aktif'): ?>
-                    <p>Terlambat : <?= htmlspecialchars($loan['terlambat']) ?> Hari</p>
-                <?php elseif ($loan['status'] === 'Belum Lunas'): ?>
-                    <p>Denda : Rp <?= number_format($loan['denda'], 0, ',', '.') ?></p>
-                <?php else: ?>
-                    <p>Selesai</p>
-                <?php endif; ?>
-                <br>
-                <?php
-                $badge_class = 'badge-success';
-                if ($loan['status'] === 'Aktif') {
-                    $badge_class = 'badge-warning';
-                } elseif ($loan['status'] === 'Belum Lunas') {
-                    $badge_class = 'badge-danger';
-                }
-                ?>
-                <span class="badge <?= $badge_class ?>">
-                    <?= htmlspecialchars($loan['status']) ?>
-                </span>
-                
-                <?php if ($loan['status'] !== 'Selesai' && $role === 'admin'): ?>
-                <button class="btn-detail" style="width: 100%; margin-top: 15px; border: none; cursor: pointer; padding: 8px 0; font-size: 13px;">
-                    Lihat Detail
-                </button>
-                <?php endif; ?>
+        <div class="list-ke-bawah-container">
+            <div class="list-header-row">
+                <div>Kode</div>
+                <div>Nama Alat</div>
+                <div>Peminjam (NIM)</div>
+                <div>Keterangan</div>
+                <div>Status</div>
             </div>
-        <?php endforeach; ?>
+
+            <?php foreach ($loans as $loan): ?>
+                <?php $js_loan = json_encode($loan); ?>
+                <div class="list-item-row" style="<?= $role === 'admin' ? 'cursor: pointer;' : '' ?>" <?= $role === 'admin' ? "onclick='openPeminjamanModal(" . htmlspecialchars($js_loan, ENT_QUOTES, "UTF-8") . ")'" : "" ?>>
+                    <div class="data-text" style="font-family: monospace; font-weight: 700; color: #64748b;"><?= htmlspecialchars($loan['kode_alat']) ?></div>
+                    <div class="data-text" style="font-weight: 700; color: #0f172a;"><?= htmlspecialchars($loan['nama_alat']) ?></div>
+                    <div class="data-text"><?= htmlspecialchars($loan['user_nama']) ?> <span style="color: #64748b; font-size: 12px; display: block;">NIM: <?= htmlspecialchars($loan['user_nim']) ?></span></div>
+                    <div class="data-text">
+                        <?php if ($loan['status'] === 'Aktif'): ?>
+                            <span style="color: #ff9800; font-weight: 600;">Terlambat: <?= htmlspecialchars($loan['terlambat']) ?> Hari</span>
+                        <?php elseif ($loan['status'] === 'Belum Lunas'): ?>
+                            <span style="color: #ef4444; font-weight: 600;">Denda: Rp <?= number_format($loan['denda'], 0, ',', '.') ?></span>
+                        <?php else: ?>
+                            <span style="color: #10b981;">Waktu Selesai</span>
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <?php
+                        $badge_class = 'badge-success';
+                        if ($loan['status'] === 'Aktif') {
+                            $badge_class = 'badge-warning';
+                        } elseif ($loan['status'] === 'Belum Lunas') {
+                            $badge_class = 'badge-danger';
+                        }
+                        ?>
+                        <span class="badge <?= $badge_class ?>"><?= htmlspecialchars($loan['status']) ?></span>
+                        
+                        <?php if ($loan['status'] !== 'Selesai' && $role === 'admin'): ?>
+                            <button class="btn-detail-table" style="margin-top: 5px; display: block;">Detail</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
     <?php endif; ?>
 
 </div>
 
-<!-- Modal Verifikasi -->
 <div id="verifikasiModal" class="modal-overlay">
     <div class="modal-content detail-card">
         <span class="close-btn" onclick="closeVerifikasiModal()">&times;</span>
-        
         <img id="v-modal-img" src="" class="detail-img">
-        
         <div class="detail-body">
             <h2 id="v-modal-nama-alat"></h2>
-            
             <div class="info-box" style="margin-bottom: 20px;">
                 <p><b>Mahasiswa :</b> <span id="v-modal-mahasiswa"></span></p>
                 <p><b>NIM :</b> <span id="v-modal-nim"></span></p>
                 <p><b>Tanggal Pinjam :</b> <span id="v-modal-tgl"></span></p>
                 <p><b>Jumlah :</b> <span id="v-modal-jumlah"></span> Unit</p>
             </div>
-            
             <form method="POST" action="peminjaman.php">
                 <input type="hidden" name="id" id="v-modal-id">
                 <div style="display: flex; gap: 10px;">
@@ -214,14 +225,11 @@ if ($role === 'admin') {
     </div>
 </div>
 
-<!-- Modal Peminjaman -->
 <div id="peminjamanModal" class="modal-overlay">
     <div class="modal-content detail-card">
         <span class="close-btn" onclick="closePeminjamanModal()">&times;</span>
-        
         <div class="detail-body">
             <h2 id="p-modal-title" style="margin-bottom: 20px;">Detail Peminjaman</h2>
-            
             <div class="info-box" style="margin-bottom: 20px;">
                 <p><b>Alat :</b> <span id="p-modal-alat"></span></p>
                 <p><b>Kode Alat :</b> <span id="p-modal-kode"></span></p>
@@ -234,7 +242,6 @@ if ($role === 'admin') {
                     <b>Total Denda :</b> Rp <span id="p-modal-denda"></span>
                 </p>
             </div>
-            
             <form method="POST" action="peminjaman.php" id="p-modal-form" style="display: none;">
                 <input type="hidden" name="id" id="p-modal-id">
                 <button type="submit" name="action" id="p-modal-action-btn" value="" class="btn-primary" style="width: 100%; border: none; cursor: pointer;">
@@ -257,7 +264,6 @@ function formatRupiah(number) {
     return new Intl.NumberFormat('id-ID').format(number);
 }
 
-// Verifikasi Modal logic
 function openVerifikasiModal(item) {
     document.getElementById('v-modal-id').value = item.id;
     document.getElementById('v-modal-img').src = item.img;
@@ -282,7 +288,6 @@ document.getElementById('verifikasiModal').addEventListener('click', function(e)
     }
 });
 
-// Peminjaman Modal logic
 function openPeminjamanModal(item) {
     document.getElementById('p-modal-id').value = item.id;
     document.getElementById('p-modal-alat').innerText = item.nama_alat;
@@ -313,9 +318,8 @@ function openPeminjamanModal(item) {
         form.style.display = 'block';
         actionBtn.value = 'lunas';
         actionBtn.innerText = 'Lunas';
-        actionBtn.className = 'btn-pinjam'; // Warna hijau jika ada
+        actionBtn.className = 'btn-pinjam';
     } else {
-        // Status Selesai
         form.style.display = 'none';
     }
     
