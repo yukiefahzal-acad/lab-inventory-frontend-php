@@ -4,111 +4,170 @@ include 'includes/header.php';
 $role = $_SESSION['role'] ?? 'user';
 $user_id = $_SESSION['id'] ?? 0;
 
-if ($role === 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['id'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['id'])) {
     $id = intval($_POST['id']);
     $action = $_POST['action'];
     $msg = 'Status berhasil diperbarui.';
-    
-    if ($action === 'approve' || $action === 'reject') {
-        foreach ($_SESSION['dummy_verifikasi'] as $key => $pending) {
-            if ($pending['id'] == $id) {
-                if ($action === 'approve') {
-                    $u_id = 1;
-                    foreach ($_SESSION['dummy_users'] as $u) {
-                        if ($u['nim'] === $pending['user_nim']) {
-                            $u_id = $u['id'];
-                            break;
-                        }
-                    }
-                    
-                    $kode_alat = 'UNI-001';
-                    $alat_id = 1;
-                    foreach ($_SESSION['dummy_alat'] as $a) {
-                        if ($a['nama'] === $pending['alat_nama']) {
-                            $kode_alat = $a['kode'];
-                            $alat_id = $a['id'];
-                            break;
-                        }
-                    }
-                    
-                    $_SESSION['dummy_peminjaman'][] = [
-                        'id' => count($_SESSION['dummy_peminjaman']) + 1,
-                        'user_id' => $u_id,
-                        'user_nama' => $pending['user_nama'],
-                        'user_nim' => $pending['user_nim'],
-                        'alat_id' => $alat_id,
-                        'kode_alat' => $kode_alat,
-                        'nama_alat' => $pending['alat_nama'],
-                        'tgl_pinjam' => $pending['tgl_pinjam'],
-                        'tgl_kembali' => date('Y-m-d', strtotime($pending['tgl_pinjam'] . ' + 7 days')),
-                        'jumlah' => $pending['jumlah'],
-                        'denda' => 0,
-                        'status' => 'Aktif',
-                        'terlambat' => 0
-                    ];
-                    $msg = 'Peminjaman telah disetujui.';
-                } else {
-                    $msg = 'Peminjaman telah ditolak.';
-                }
-                
-                unset($_SESSION['dummy_verifikasi'][$key]);
-                $_SESSION['dummy_verifikasi'] = array_values($_SESSION['dummy_verifikasi']);
-                break;
-            }
+
+    if ($role === 'admin' && ($action === 'approve' || $action === 'reject')) {
+        $status = ($action === 'approve') ? 'Disetujui' : 'Ditolak';
+        $catatan_default = ($action === 'approve') ? 'Disetujui oleh admin' : 'Ditolak oleh admin';
+        $catatan = !empty($_POST['catatan_pinjaman']) ? $_POST['catatan_pinjaman'] : $catatan_default;
+
+        $response = call_api('PUT', '/api/peminjaman/persetujuan', [
+            'id' => $id,
+            'status' => $status,
+            'catatan_pinjaman' => $catatan
+        ]);
+
+        if (isset($response['http_code']) && $response['http_code'] >= 200 && $response['http_code'] < 300) {
+            $msg = ($action === 'approve') ? 'Peminjaman telah disetujui.' : 'Peminjaman telah ditolak.';
+        } else {
+            $msg = 'Gagal: ' . ($response['message'] ?? 'Unknown error');
         }
-    } else {
-        foreach ($_SESSION['dummy_peminjaman'] as &$loan) {
-            if ($loan['id'] == $id) {
-                if ($action === 'verifikasi_kembali') {
-                    if ($loan['denda'] > 0) {
-                        $loan['status'] = 'Belum Lunas';
-                        $msg = 'Pengembalian diverifikasi. Status diubah menjadi Belum Lunas karena terdapat denda.';
-                    } else {
-                        $loan['status'] = 'Selesai';
-                        $msg = 'Pengembalian diverifikasi. Pinjaman telah Selesai.';
-                    }
-                } elseif ($action === 'lunas') {
-                    $loan['status'] = 'Selesai';
-                    $msg = 'Pembayaran denda telah lunas. Pinjaman Selesai.';
-                }
-                break;
-            }
+    } elseif ($action === 'verifikasi_kembali') {
+        // Asumsi kondisi baik secara default jika hanya klik verifikasi
+        $kondisi = $_POST['kondisi_alat'] ?? 'baik';
+        $catatan = $_POST['catatan_pengembalian'] ?? 'Dikembalikan';
+        $jumlah_kembali = intval($_POST['jumlah_kembali'] ?? 1); // fallback
+
+        $response = call_api('POST', '/api/pengembalian', [
+            'peminjaman_id' => $id,
+            'tanggal_kembali_aktual' => date('Y-m-d'),
+            'kondisi_alat' => $kondisi,
+            'jumlah_kembali' => $jumlah_kembali,
+            'catatan_pengembalian' => $catatan
+        ]);
+
+        if (isset($response['http_code']) && $response['http_code'] >= 200 && $response['http_code'] < 300) {
+            $msg = 'Pengembalian berhasil diverifikasi.';
+        } else {
+            $msg = 'Gagal: ' . ($response['message'] ?? 'Unknown error');
         }
-        unset($loan);
+    } elseif ($action === 'lunas' && $role === 'admin') {
+        $response = call_api('PUT', '/api/admin/denda/lunas', [
+            'id' => $id // Ini ID denda, diasumsikan form mengirim ID denda
+        ]);
+
+        if (isset($response['http_code']) && $response['http_code'] >= 200 && $response['http_code'] < 300) {
+            $msg = 'Pembayaran denda telah lunas.';
+        } else {
+            $msg = 'Gagal: ' . ($response['message'] ?? 'Unknown error');
+        }
     }
-    
-    echo "<script>
-        alert('$msg');
-        window.location.href = 'peminjaman.php';
-    </script>";
+
+    $_SESSION['flash_message'] = $msg;
+    echo "<script>window.location.href='peminjaman.php';</script>";
     exit;
 }
 
 $pending_list = [];
 $loans = [];
 
-if ($role === 'admin') {
-    $pending_list = $_SESSION['dummy_verifikasi'] ?? [];
-    $loans = $_SESSION['dummy_peminjaman'] ?? [];
-} else {
-    if (isset($_SESSION['dummy_verifikasi'])) {
-        foreach ($_SESSION['dummy_verifikasi'] as $pending) {
-            if ($pending['user_nama'] === $_SESSION['nama']) {
-                $pending_list[] = $pending;
-            }
+// Get Peminjaman from API
+$res_pinjaman = call_api('GET', '/api/peminjaman/riwayat');
+$all_loans = $res_pinjaman['data'] ?? [];
+
+// Get Alat from API untuk referensi Kode dan Foto
+$res_alat = call_api('GET', '/api/alat');
+$all_alat = $res_alat['data'] ?? [];
+$alat_dict = [];
+foreach ($all_alat as $a) {
+    $alat_dict[$a['id']] = $a;
+}
+
+// Get Denda from API
+$denda_endpoint = ($role === 'admin') ? '/api/admin/denda' : '/api/user/denda';
+$res_denda = call_api('GET', $denda_endpoint);
+$all_denda = $res_denda['data'] ?? [];
+$denda_dict = [];
+foreach ($all_denda as $d) {
+    if (($d['status_bayar'] ?? $d['status_pembayaran'] ?? $d['status'] ?? '') === 'Belum Lunas') {
+        $denda_dict[$d['peminjaman_id']] = $d;
+    }
+}
+
+foreach ($all_loans as $loan) {
+    // Hitung Keterlambatan
+    $tgl_kembali = $loan['tanggal_kembali_rencana'] ?? date('Y-m-d');
+    $terlambat = 0;
+    if (($loan['status'] ?? '') !== 'Dikembalikan' && ($loan['status'] ?? '') !== 'Ditolak') {
+        if (strtotime($tgl_kembali) < strtotime(date('Y-m-d'))) {
+            $diff = strtotime(date('Y-m-d')) - strtotime($tgl_kembali);
+            $terlambat = floor($diff / (60 * 60 * 24));
         }
     }
-    if (isset($_SESSION['dummy_peminjaman'])) {
-        foreach ($_SESSION['dummy_peminjaman'] as $loan) {
-            if ($loan['user_id'] == $user_id) {
-                $loans[] = $loan;
+
+    $alat_info = $alat_dict[$loan['alat_id']] ?? [];
+    $kode_alat = $alat_info['kode_alat'] ?? ($loan['kode_alat'] ?? '-');
+    $foto = $alat_info['foto'] ?? ($loan['foto'] ?? 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=150&q=70');
+
+    if (strpos($foto, '|') !== false) {
+        $foto_parts = explode('|', $foto);
+        $foto = $foto_parts[0];
+    }
+
+    $mapped_loan = [
+        'id' => $loan['id'],
+        'user_nama' => $loan['nama_mahasiswa'] ?? $loan['nama_user'] ?? $loan['user_nama'] ?? 'User',
+        'user_nim' => $loan['nim_nip'] ?? $loan['user_nim'] ?? '-',
+        'alat_nama' => $loan['nama_alat'] ?? 'Alat',
+        'kode_alat' => $kode_alat,
+        'spesifikasi' => $alat_info['spesifikasi'] ?? '-',
+        'img' => $foto,
+        'tgl_pinjam' => $loan['tanggal_pinjam'] ?? date('Y-m-d'),
+        'tgl_kembali' => $tgl_kembali,
+        'jumlah' => $loan['jumlah'] ?? 1,
+        'status' => $loan['status'] ?? 'Menunggu',
+        'denda' => 0, // Akan di-update jika digabung dengan API denda
+        'terlambat' => $terlambat,
+        'catatan' => !empty($loan['catatan_pengembalian']) ? $loan['catatan_pengembalian'] : (!empty($loan['catatan_pinjaman']) ? $loan['catatan_pinjaman'] : '-')
+    ];
+
+    $denda_info = $denda_dict[$loan['id']] ?? null;
+    if ($denda_info) {
+        $mapped_loan['status'] = 'Belum Lunas';
+        $mapped_loan['denda'] = floatval($denda_info['jumlah_denda'] ?? $denda_info['denda'] ?? 0);
+        $mapped_loan['denda_id'] = $denda_info['id'] ?? null;
+    }
+
+    if ($mapped_loan['status'] === 'Menunggu') {
+        if ($role === 'admin' || $loan['user_id'] == $user_id) {
+            $pending_list[] = $mapped_loan;
+        }
+    } else {
+        if ($role === 'admin' || $loan['user_id'] == $user_id) {
+            // Mapping status API to UI status
+            if ($mapped_loan['status'] === 'Dipinjam' || $mapped_loan['status'] === 'Disetujui') {
+                $mapped_loan['status'] = 'Aktif';
+            } elseif ($mapped_loan['status'] === 'Dikembalikan') {
+                $mapped_loan['status'] = 'Selesai';
             }
+            $loans[] = $mapped_loan;
         }
     }
 }
 ?>
 
 <div class="riwayat-container" style="padding: 20px 25px;">
+
+    <?php
+    // Tampilkan flash message jika ada, menggunakan SweetAlert2
+    if (isset($_SESSION['flash_message'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var msg = <?= json_encode($_SESSION['flash_message']) ?>;
+                var isError = msg.indexOf('Gagal') !== -1;
+                Swal.fire({
+                    title: isError ? 'Gagal' : 'Berhasil',
+                    text: msg,
+                    icon: isError ? 'error' : 'success',
+                    confirmButtonColor: '#7dd3fc'
+                });
+            });
+        </script>
+        <?php unset($_SESSION['flash_message']); ?>
+    <?php endif; ?>
 
     <h3 style="margin-bottom: 15px; font-weight: 800; color: #0f172a;">Menunggu Verifikasi</h3>
     <?php if (empty($pending_list)): ?>
@@ -118,21 +177,27 @@ if ($role === 'admin') {
     <?php else: ?>
         <div class="list-ke-bawah-container">
             <div class="list-header-row">
-                <div>Gambar</div>
-                <div>Nama Alat</div>
-                <div>Peminjam (NIM)</div>
+                <div>Alat</div>
+                <div></div>
+                <div>Peminjam</div>
                 <div>Jumlah</div>
                 <div>Status / Aksi</div>
             </div>
-            
+
             <?php foreach ($pending_list as $pending): ?>
                 <?php $js_pending = json_encode($pending); ?>
                 <div class="list-item-row" style="<?= $role === 'admin' ? 'cursor: pointer;' : '' ?>" <?= $role === 'admin' ? "onclick='openVerifikasiModal(" . htmlspecialchars($js_pending, ENT_QUOTES, "UTF-8") . ")'" : "" ?>>
                     <div>
-                        <img src="<?= htmlspecialchars($pending['img']) ?>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;">
+                        <img src="<?= htmlspecialchars($pending['img']) ?>"
+                            style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;">
                     </div>
-                    <div class="data-text" style="font-weight: 700; color: #0f172a;"><?= htmlspecialchars($pending['alat_nama']) ?></div>
-                    <div class="data-text"><?= htmlspecialchars($pending['user_nama']) ?> <span style="color: #64748b; font-size: 12px; display: block;">NIM: <?= htmlspecialchars($pending['user_nim']) ?></span></div>
+                    <div class="data-text" style="font-weight: 700; color: #0f172a;">
+                        <div style="font-weight: 700; color: #0f172a;"><?= htmlspecialchars($pending['alat_nama']) ?></div>
+                        <div style="font-family: monospace; font-weight: 700; color: #64748b; font-size: 12px;">
+                            <?= htmlspecialchars($pending['kode_alat']) ?>
+                        </div>
+                    </div>
+                    <div class="data-text"><?= htmlspecialchars($pending['user_nama']) ?></div>
                     <div class="data-text"><?= htmlspecialchars($pending['jumlah']) ?> Unit</div>
                     <div>
                         <?php if ($role === 'admin'): ?>
@@ -154,9 +219,9 @@ if ($role === 'admin') {
     <?php else: ?>
         <div class="list-ke-bawah-container">
             <div class="list-header-row">
-                <div>Kode</div>
-                <div>Nama Alat</div>
-                <div>Peminjam (NIM)</div>
+                <div>Alat</div>
+                <div></div>
+                <div>Peminjam</div>
                 <div>Keterangan</div>
                 <div>Status</div>
             </div>
@@ -164,31 +229,49 @@ if ($role === 'admin') {
             <?php foreach ($loans as $loan): ?>
                 <?php $js_loan = json_encode($loan); ?>
                 <div class="list-item-row" style="<?= $role === 'admin' ? 'cursor: pointer;' : '' ?>" <?= $role === 'admin' ? "onclick='openPeminjamanModal(" . htmlspecialchars($js_loan, ENT_QUOTES, "UTF-8") . ")'" : "" ?>>
-                    <div class="data-text" style="font-family: monospace; font-weight: 700; color: #64748b;"><?= htmlspecialchars($loan['kode_alat']) ?></div>
-                    <div class="data-text" style="font-weight: 700; color: #0f172a;"><?= htmlspecialchars($loan['nama_alat']) ?></div>
-                    <div class="data-text"><?= htmlspecialchars($loan['user_nama']) ?> <span style="color: #64748b; font-size: 12px; display: block;">NIM: <?= htmlspecialchars($loan['user_nim']) ?></span></div>
+                    <div>
+                        <img src="<?= htmlspecialchars($loan['img']) ?>"
+                            style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    </div>
+                    <div class="data-text">
+                        <div style="font-weight: 700; color: #0f172a;"><?= htmlspecialchars($loan['alat_nama']) ?></div>
+                        <div style="font-family: monospace; font-weight: 700; color: #64748b; font-size: 12px;">
+                            <?= htmlspecialchars($loan['kode_alat']) ?>
+                        </div>
+                    </div>
+                    <div class="data-text"><?= htmlspecialchars($loan['user_nama']) ?></div>
                     <div class="data-text">
                         <?php if ($loan['status'] === 'Aktif'): ?>
-                            <span style="color: #ff9800; font-weight: 600;">Terlambat: <?= htmlspecialchars($loan['terlambat']) ?> Hari</span>
+                            <?php if ($loan['terlambat'] > 0): ?>
+                                <span style="color: #ff9800; font-weight: 600;">Terlambat: <?= htmlspecialchars($loan['terlambat']) ?>
+                                    Hari</span>
+                            <?php else: ?>
+                                <span style="color: #10b981; font-weight: 600;">Berlangsung</span>
+                            <?php endif; ?>
                         <?php elseif ($loan['status'] === 'Belum Lunas'): ?>
-                            <span style="color: #ef4444; font-weight: 600;">Denda: Rp <?= number_format($loan['denda'], 0, ',', '.') ?></span>
+                            <span style="color: #ef4444; font-weight: 600;">Denda: Rp
+                                <?= number_format($loan['denda'], 0, ',', '.') ?></span>
+                        <?php elseif ($loan['status'] === 'Ditolak'): ?>
+                            <span
+                                style="color: #ef4444; font-weight: 600; font-size: 12px;"><?= htmlspecialchars($loan['catatan']) ?></span>
                         <?php else: ?>
-                            <span style="color: #10b981;">Waktu Selesai</span>
+                            <span style="color: #10b981; font-weight: 600;">Selesai <br><span
+                                    style="font-size:11px; color:#64748b;"><?= htmlspecialchars($loan['catatan']) ?></span></span>
                         <?php endif; ?>
                     </div>
-                    <div>
+                    <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between;">
                         <?php
                         $badge_class = 'badge-success';
                         if ($loan['status'] === 'Aktif') {
                             $badge_class = 'badge-warning';
-                        } elseif ($loan['status'] === 'Belum Lunas') {
+                        } elseif ($loan['status'] === 'Belum Lunas' || $loan['status'] === 'Ditolak') {
                             $badge_class = 'badge-danger';
                         }
                         ?>
                         <span class="badge <?= $badge_class ?>"><?= htmlspecialchars($loan['status']) ?></span>
-                        
-                        <?php if ($loan['status'] !== 'Selesai' && $role === 'admin'): ?>
-                            <button class="btn-detail-table" style="margin-top: 5px; display: block;">Detail</button>
+
+                        <?php if ($loan['status'] !== 'Selesai' && $loan['status'] !== 'Ditolak' && $role === 'admin'): ?>
+                            <button class="btn-detail-table">Detail</button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -203,20 +286,31 @@ if ($role === 'admin') {
         <span class="close-btn" onclick="closeVerifikasiModal()">&times;</span>
         <img id="v-modal-img" src="" class="detail-img">
         <div class="detail-body">
-            <h2 id="v-modal-nama-alat"></h2>
+            <h2 id="v-modal-nama-alat" style="margin-bottom: 5px;"></h2>
+            <p id="v-modal-spesifikasi" style="font-size: 13px; color: #64748b; margin-bottom: 20px;"></p>
             <div class="info-box" style="margin-bottom: 20px;">
-                <p><b>Mahasiswa :</b> <span id="v-modal-mahasiswa"></span></p>
-                <p><b>NIM :</b> <span id="v-modal-nim"></span></p>
-                <p><b>Tanggal Pinjam :</b> <span id="v-modal-tgl"></span></p>
+                <p><b>Peminjam :</b> <span id="v-modal-mahasiswa"></span></p>
+                <p><b>Tanggal Pinjam :</b> <span id="v-modal-tgl-pinjam"></span></p>
+                <p><b>Tanggal Kembali :</b> <span id="v-modal-tgl-kembali"></span></p>
                 <p><b>Jumlah :</b> <span id="v-modal-jumlah"></span> Unit</p>
             </div>
             <form method="POST" action="peminjaman.php">
                 <input type="hidden" name="id" id="v-modal-id">
+                <div style="margin-bottom: 15px; text-align: left;">
+                    <label
+                        style="display: block; margin-bottom: 5px; font-weight: 700; font-size: 14px; color: #0f172a;">Catatan
+                        (Opsional)</label>
+                    <textarea name="catatan_pinjaman" rows="2"
+                        style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-family: inherit; resize: vertical;"
+                        placeholder="Tambahkan catatan jika diperlukan..."></textarea>
+                </div>
                 <div style="display: flex; gap: 10px;">
-                    <button type="submit" name="action" value="approve" class="btn-primary" style="flex: 1; border: none; cursor: pointer;">
+                    <button type="submit" name="action" value="approve" class="btn-primary"
+                        style="flex: 1; border: none; cursor: pointer; padding: 12px; border-radius: 10px; font-weight: 700; background-color: #7dd3fc; color: #0f172a;">
                         Verifikasi Pinjaman
                     </button>
-                    <button type="submit" name="action" value="reject" class="btn-logout" style="flex: 1; border: none; cursor: pointer; margin-top: 0;">
+                    <button type="submit" name="action" value="reject" class="btn-logout"
+                        style="flex: 1; border: none; cursor: pointer; padding: 12px; border-radius: 10px; font-weight: 700; background-color: #ef4444; color: #ffffff; margin-top: 0;">
                         Tolak
                     </button>
                 </div>
@@ -228,14 +322,16 @@ if ($role === 'admin') {
 <div id="peminjamanModal" class="modal-overlay">
     <div class="modal-content detail-card">
         <span class="close-btn" onclick="closePeminjamanModal()">&times;</span>
+        <img id="p-modal-img" src="" class="detail-img">
         <div class="detail-body">
-            <h2 id="p-modal-title" style="margin-bottom: 20px;">Detail Peminjaman</h2>
+            <h2 id="p-modal-nama-alat" style="margin-bottom: 5px;"></h2>
+            <p id="p-modal-spesifikasi" style="font-size: 13px; color: #64748b; margin-bottom: 20px;"></p>
             <div class="info-box" style="margin-bottom: 20px;">
-                <p><b>Alat :</b> <span id="p-modal-alat"></span></p>
-                <p><b>Kode Alat :</b> <span id="p-modal-kode"></span></p>
-                <p><b>Peminjam :</b> <span id="p-modal-user"></span> (<span id="p-modal-nim"></span>)</p>
-                <p><b>Tanggal Pinjam :</b> <span id="p-modal-tgl"></span></p>
-                <p><b>Jumlah :</b> <span id="p-modal-jumlah"></span> Unit</p>
+                <p><b>Peminjam :</b> <span id="p-modal-user"></span></p>
+                <p><b>Tanggal Pinjam :</b> <span id="p-modal-tgl-pinjam"></span></p>
+                <p><b>Tanggal Kembali :</b> <span id="p-modal-tgl-kembali"></span></p>
+                <p><b>Jumlah Pinjam :</b> <span id="p-modal-jumlah"></span> Unit</p>
+                <p><b>Catatan Alat :</b> <span id="p-modal-catatan-alat"></span></p>
                 <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
                 <p><b>Status :</b> <span id="p-modal-status" style="font-weight: 800;"></span></p>
                 <p id="p-modal-denda-container" style="display: none; color: #ff4d4d;">
@@ -244,7 +340,40 @@ if ($role === 'admin') {
             </div>
             <form method="POST" action="peminjaman.php" id="p-modal-form" style="display: none;">
                 <input type="hidden" name="id" id="p-modal-id">
-                <button type="submit" name="action" id="p-modal-action-btn" value="" class="btn-primary" style="width: 100%; border: none; cursor: pointer;">
+
+                <div id="p-modal-pengembalian-fields" style="display: none;">
+                    <div style="margin-bottom: 15px; text-align: left;">
+                        <label
+                            style="display: block; margin-bottom: 5px; font-weight: 700; font-size: 14px; color: #0f172a;">Kondisi
+                            Alat</label>
+                        <select name="kondisi_alat" required
+                            style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-family: inherit;">
+                            <option value="baik">Baik</option>
+                            <option value="rusak">Rusak</option>
+                            <option value="hilang">Hilang</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px; text-align: left;">
+                        <label
+                            style="display: block; margin-bottom: 5px; font-weight: 700; font-size: 14px; color: #0f172a;">Jumlah
+                            Kembali</label>
+                        <input type="number" name="jumlah_kembali" id="p-modal-input-jumlah" required min="0"
+                            style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-family: inherit;">
+                    </div>
+
+                    <div style="margin-bottom: 15px; text-align: left;">
+                        <label
+                            style="display: block; margin-bottom: 5px; font-weight: 700; font-size: 14px; color: #0f172a;">Catatan
+                            Pengembalian (Opsional)</label>
+                        <textarea name="catatan_pengembalian" rows="2"
+                            style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-family: inherit; resize: vertical;"
+                            placeholder="Tambahkan catatan..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" name="action" id="p-modal-action-btn" value="" class="btn-primary"
+                    style="width: 100%; border: none; cursor: pointer; padding: 12px; border-radius: 10px; font-weight: 700; background-color: #7dd3fc; color: #0f172a;">
                     Tindakan
                 </button>
             </form>
@@ -253,90 +382,99 @@ if ($role === 'admin') {
 </div>
 
 <script>
-function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    const day = ('0' + d.getDate()).slice(-2);
-    const month = ('0' + (d.getMonth() + 1)).slice(-2);
-    return day + '/' + month + '/' + d.getFullYear();
-}
-
-function formatRupiah(number) {
-    return new Intl.NumberFormat('id-ID').format(number);
-}
-
-function openVerifikasiModal(item) {
-    document.getElementById('v-modal-id').value = item.id;
-    document.getElementById('v-modal-img').src = item.img;
-    document.getElementById('v-modal-nama-alat').innerText = item.alat_nama;
-    document.getElementById('v-modal-mahasiswa').innerText = item.user_nama;
-    document.getElementById('v-modal-nim').innerText = item.user_nim;
-    document.getElementById('v-modal-tgl').innerText = formatDate(item.tgl_pinjam);
-    document.getElementById('v-modal-jumlah').innerText = item.jumlah;
-    
-    document.getElementById('verifikasiModal').classList.add('show');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeVerifikasiModal() {
-    document.getElementById('verifikasiModal').classList.remove('show');
-    document.body.style.overflow = '';
-}
-
-document.getElementById('verifikasiModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeVerifikasiModal();
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        const day = ('0' + d.getDate()).slice(-2);
+        const month = ('0' + (d.getMonth() + 1)).slice(-2);
+        return day + '/' + month + '/' + d.getFullYear();
     }
-});
 
-function openPeminjamanModal(item) {
-    document.getElementById('p-modal-id').value = item.id;
-    document.getElementById('p-modal-alat').innerText = item.nama_alat;
-    document.getElementById('p-modal-kode').innerText = item.kode_alat;
-    document.getElementById('p-modal-user').innerText = item.user_nama;
-    document.getElementById('p-modal-nim').innerText = item.user_nim;
-    document.getElementById('p-modal-tgl').innerText = formatDate(item.tgl_pinjam);
-    document.getElementById('p-modal-jumlah').innerText = item.jumlah;
-    document.getElementById('p-modal-status').innerText = item.status;
-    
-    const dendaContainer = document.getElementById('p-modal-denda-container');
-    if (item.denda > 0) {
-        document.getElementById('p-modal-denda').innerText = formatRupiah(item.denda);
-        dendaContainer.style.display = 'block';
-    } else {
-        dendaContainer.style.display = 'none';
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID').format(number);
     }
-    
-    const form = document.getElementById('p-modal-form');
-    const actionBtn = document.getElementById('p-modal-action-btn');
-    
-    if (item.status === 'Aktif') {
-        form.style.display = 'block';
-        actionBtn.value = 'verifikasi_kembali';
-        actionBtn.innerText = 'Verifikasi Pengembalian';
-        actionBtn.className = 'btn-primary';
-    } else if (item.status === 'Belum Lunas') {
-        form.style.display = 'block';
-        actionBtn.value = 'lunas';
-        actionBtn.innerText = 'Lunas';
-        actionBtn.className = 'btn-pinjam';
-    } else {
-        form.style.display = 'none';
-    }
-    
-    document.getElementById('peminjamanModal').classList.add('show');
-    document.body.style.overflow = 'hidden';
-}
 
-function closePeminjamanModal() {
-    document.getElementById('peminjamanModal').classList.remove('show');
-    document.body.style.overflow = '';
-}
+    function openVerifikasiModal(item) {
+        document.getElementById('v-modal-id').value = item.id;
+        document.getElementById('v-modal-img').src = item.img;
+        document.getElementById('v-modal-nama-alat').innerText = item.alat_nama;
+        document.getElementById('v-modal-spesifikasi').innerText = item.spesifikasi;
+        document.getElementById('v-modal-mahasiswa').innerText = item.user_nama;
+        document.getElementById('v-modal-tgl-pinjam').innerText = formatDate(item.tgl_pinjam);
+        document.getElementById('v-modal-tgl-kembali').innerText = formatDate(item.tgl_kembali);
+        document.getElementById('v-modal-jumlah').innerText = item.jumlah;
 
-document.getElementById('peminjamanModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closePeminjamanModal();
+        document.getElementById('verifikasiModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
-});
+
+    function closeVerifikasiModal() {
+        document.getElementById('verifikasiModal').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('verifikasiModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeVerifikasiModal();
+        }
+    });
+
+    function openPeminjamanModal(item) {
+        document.getElementById('p-modal-id').value = item.denda_id ? item.denda_id : item.id;
+        document.getElementById('p-modal-img').src = item.img;
+        document.getElementById('p-modal-nama-alat').innerText = item.alat_nama;
+        document.getElementById('p-modal-spesifikasi').innerText = item.spesifikasi;
+        document.getElementById('p-modal-user').innerText = item.user_nama;
+        document.getElementById('p-modal-tgl-pinjam').innerText = formatDate(item.tgl_pinjam);
+        document.getElementById('p-modal-tgl-kembali').innerText = formatDate(item.tgl_kembali);
+        document.getElementById('p-modal-jumlah').innerText = item.jumlah;
+        document.getElementById('p-modal-catatan-alat').innerText = item.catatan || '-';
+        document.getElementById('p-modal-status').innerText = item.status;
+        document.getElementById('p-modal-input-jumlah').max = item.jumlah;
+        document.getElementById('p-modal-input-jumlah').value = item.jumlah;
+
+        const dendaContainer = document.getElementById('p-modal-denda-container');
+        if (item.denda > 0) {
+            document.getElementById('p-modal-denda').innerText = formatRupiah(item.denda);
+            dendaContainer.style.display = 'block';
+        } else {
+            dendaContainer.style.display = 'none';
+        }
+
+        const form = document.getElementById('p-modal-form');
+        const actionBtn = document.getElementById('p-modal-action-btn');
+        const pengembalianFields = document.getElementById('p-modal-pengembalian-fields');
+
+        if (item.status === 'Aktif') {
+            form.style.display = 'block';
+            pengembalianFields.style.display = 'block';
+            actionBtn.value = 'verifikasi_kembali';
+            actionBtn.innerText = 'Verifikasi Pengembalian';
+            actionBtn.className = 'btn-primary';
+        } else if (item.status === 'Belum Lunas') {
+            form.style.display = 'block';
+            pengembalianFields.style.display = 'none';
+            actionBtn.value = 'lunas';
+            actionBtn.innerText = 'Lunas';
+            actionBtn.className = 'btn-pinjam';
+        } else {
+            form.style.display = 'none';
+            pengembalianFields.style.display = 'none';
+        }
+
+        document.getElementById('peminjamanModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePeminjamanModal() {
+        document.getElementById('peminjamanModal').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('peminjamanModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closePeminjamanModal();
+        }
+    });
 </script>
 
 <?php include 'includes/footer.php'; ?>

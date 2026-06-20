@@ -9,15 +9,20 @@ if(isset($_POST['daftar'])){
     $password_confirm = $_POST['password_confirm'];
 
     if ($password !== $password_confirm) {
-        echo "<script>alert('Konfirmasi password tidak cocok!');</script>";
+        $swal_error = 'Konfirmasi password tidak cocok!';
     } else {
-        $password_md5 = md5($password);
-        register_dummy_user($nama, $nim, $email, $password_md5);
-        echo "<script>
-            alert('Pendaftaran berhasil! Silakan login.');
-            window.location.href = 'login.php';
-        </script>";
-        exit;
+        $response = call_api('POST', '/api/register', [
+            'nama' => $nama,
+            'nim_nip' => $nim,
+            'email' => $email,
+            'password' => $password
+        ]);
+
+        if (isset($response['status']) && $response['status'] === 'success') {
+            $swal_success = 'Pendaftaran berhasil! Silakan login.';
+        } else {
+            $swal_error = htmlspecialchars($response['message'] ?? 'Pendaftaran gagal');
+        }
     }
 }
 ?>
@@ -28,6 +33,7 @@ if(isset($_POST['daftar'])){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register UNIBI LAB</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
@@ -65,12 +71,35 @@ if(isset($_POST['daftar'])){
             <button type="submit" name="daftar" class="btn-primary">Daftar</button>
         </form>
 
-        <div class="auth-footer">
-            Sudah punya akun?
-            <a href="login.php">Masuk di sini</a>
+        <div class="auth-footer" style="text-align: center; margin-top: 20px;">
+            Sudah punya akun? <a href="login.php" class="link-cta">Masuk di sini</a>
         </div>
     </div>
 </div>
+
+<?php if(isset($swal_error)): ?>
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: <?= json_encode($swal_error) ?>,
+        confirmButtonColor: '#7dd3fc'
+    });
+</script>
+<?php endif; ?>
+
+<?php if(isset($swal_success)): ?>
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: <?= json_encode($swal_success) ?>,
+        confirmButtonColor: '#7dd3fc'
+    }).then((result) => {
+        window.location.href = 'login.php';
+    });
+</script>
+<?php endif; ?>
 
 </body>
 </html>
