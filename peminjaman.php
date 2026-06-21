@@ -219,7 +219,7 @@ foreach ($all_loans as $loan) {
         </div>
     <?php endif; ?>
 
-    <h3 style="margin-top: 40px; margin-bottom: 15px; font-weight: 800; color: #0f172a;">Pinjaman Aktif & Selesai</h3>
+    <h3 style="margin-top: 40px; margin-bottom: 15px; font-weight: 800; color: #0f172a;">Peminjaman Aktif & Selesai</h3>
     <?php if (empty($loans)): ?>
         <div class="riwayat-card" style="text-align: center; padding: 30px;">
             <p style="color: #64748b;">Tidak ada data peminjaman.</p>

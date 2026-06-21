@@ -43,7 +43,7 @@ $page_title = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? "Adm
             $res_denda = call_api('GET', '/api/user/denda');
             $denda_list = $res_denda['data'] ?? [];
             foreach ($denda_list as $denda) {
-                if (($denda['status_pembayaran'] ?? $denda['status'] ?? '') === 'Belum Lunas') {
+                if (($denda['status_bayar'] ?? $denda['status_pembayaran'] ?? $denda['status'] ?? '') === 'Belum Lunas') {
                     $user_total_denda_header += ($denda['jumlah_denda'] ?? $denda['denda'] ?? 0);
                 }
             }
@@ -94,7 +94,7 @@ $page_title = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? "Adm
                             </div>
                             <?php if ($role_header !== 'admin'): ?>
                                 <div class="dropdown-body">
-                                    <p><span>Denda Belum Dibayar</span> <b>Rp
+                                    <p><span>Total Denda</span> <b>Rp
                                             <?= number_format($user_total_denda_header, 0, ',', '.') ?></b></p>
                                 </div>
                             <?php endif; ?>

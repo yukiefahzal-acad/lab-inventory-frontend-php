@@ -273,7 +273,11 @@ foreach ($denda_list as $denda) {
                         </svg>
                     </div>
                     <div>
-                        Bayar denda tepat waktu untuk menghindari pembatasan peminjaman!
+                        <?php if ($user_total_denda > 0): ?>
+                            Segera lunasi denda Anda untuk menghindari pembatasan peminjaman!
+                        <?php else: ?>
+                            Bayar denda tepat waktu untuk menghindari pembatasan peminjaman!
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

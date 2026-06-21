@@ -158,7 +158,7 @@ $items = array_map(function ($item) {
         'kategori' => $kategoriArr,
         'deskripsi' => $item['spesifikasi'] ?? '-',
         'stok' => $item['stok_total'] ?? 0,
-        'stok_tersedia' => $item['stok_tersedia'] ?? $item['stok_total'] ?? 0,
+        'stok_tersedia' => $item['stok_tersedia'] ?? 0,
         'denda_hari' => $item['denda_per_hari'] ?? 0,
         'denda_rusak' => $item['denda_rusak'] ?? 0,
         'denda_hilang' => $item['denda_hilang'] ?? 0,
@@ -258,6 +258,7 @@ $items = array_map(function ($item) {
                     'kategori' => $item['kategori'],
                     'deskripsi' => $item['deskripsi'],
                     'stok' => $item['stok'],
+                    'stok_tersedia' => $item['stok_tersedia'],
                     'img' => $item['img'],
                     'foto_array' => $item['foto_array'],
                     'denda_hari' => $item['denda_hari'],
@@ -651,11 +652,11 @@ $items = array_map(function ($item) {
 
         document.getElementById('modal-nama').innerText = item.nama;
         document.getElementById('modal-deskripsi').innerText = item.deskripsi;
-        document.getElementById('modal-stok').innerText = formatRupiah(item.stok);
+        document.getElementById('modal-stok').innerText = item.stok_tersedia;
 
         const modalJumlah = document.getElementById('modal-jumlah');
         if (modalJumlah) {
-            modalJumlah.max = item.stok;
+            modalJumlah.max = item.stok_tersedia;
         }
 
         document.getElementById('modal-denda-hari').innerText = formatRupiah(item.denda_hari);

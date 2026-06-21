@@ -1,0 +1,586 @@
+{
+	"info": {
+		"_postman_id": "lab-inventory-api-v2",
+		"name": "Lab Inventory API v2",
+		"description": "Koleksi lengkap API untuk Sistem Inventaris Laboratorium. Semua field termasuk yang opsional sudah diisi.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost/lab",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "TOKEN_DARI_LOGIN",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nim_nip\": \"2024001\",\n    \"email\": \"budi.santoso@university.ac.id\",\n    \"nama\": \"Budi Santoso\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "register"]
+						},
+						"description": "Mendaftarkan user baru. Role otomatis diset sebagai 'Mahasiswa'."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set('auth_token', jsonData.token);",
+									"    console.log('Token berhasil disimpan!');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"budi.santoso@university.ac.id\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "login"]
+						},
+						"description": "Login dan mendapatkan JWT token. Token akan otomatis disimpan ke collection variable 'auth_token'."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Alat",
+			"item": [
+				{
+					"name": "Get All Alat",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/alat?search=mikroskop&kategori=Optik|Elektronik",
+							"host": ["{{base_url}}"],
+							"path": ["api", "alat"],
+							"query": [
+								{
+									"key": "search",
+									"value": "mikroskop",
+									"description": "Pencarian berdasarkan kode_alat, nama_alat, atau spesifikasi"
+								},
+								{
+									"key": "kategori",
+									"value": "Optik|Elektronik",
+									"description": "Filter kategori, gunakan pipe (|) untuk multiple kategori"
+								}
+							]
+						},
+						"description": "Mengambil daftar semua alat. Mendukung search dan filter kategori."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Alat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"kode_alat\": \"ALT-OPT-001\",\n    \"nama_alat\": \"Mikroskop Binokuler\",\n    \"spesifikasi\": \"Perbesaran 40x-1000x, lensa achromatic, iluminasi LED\",\n    \"stok_total\": 10,\n    \"foto\": \"http://localhost/lab/uploads/alat/alat_sample.png\",\n    \"kategori\": \"Optik\",\n    \"denda_per_hari\": 5000,\n    \"denda_rusak\": 150000,\n    \"denda_hilang\": 500000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/alat",
+							"host": ["{{base_url}}"],
+							"path": ["api", "alat"]
+						},
+						"description": "Menambahkan alat baru. Membutuhkan role Admin. QR Code di-generate otomatis oleh server."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Alat",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"kode_alat\": \"ALT-OPT-001\",\n    \"nama_alat\": \"Mikroskop Binokuler Olympus CX23\",\n    \"spesifikasi\": \"Perbesaran 40x-1000x, lensa achromatic, iluminasi LED, revolver 4 lubang\",\n    \"foto\": \"http://localhost/lab/uploads/alat/alat_updated.png\",\n    \"stok_total\": 12,\n    \"stok_tersedia\": 10,\n    \"kategori\": \"Optik\",\n    \"denda_per_hari\": 7500,\n    \"denda_rusak\": 200000,\n    \"denda_hilang\": 750000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/alat",
+							"host": ["{{base_url}}"],
+							"path": ["api", "alat"]
+						},
+						"description": "Mengupdate data alat. Membutuhkan role Admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Alat",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/alat",
+							"host": ["{{base_url}}"],
+							"path": ["api", "alat"]
+						},
+						"description": "Menghapus alat berdasarkan ID. Membutuhkan role Admin. File foto juga akan dihapus dari server."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Upload",
+			"item": [
+				{
+					"name": "Upload Foto Alat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "foto",
+									"type": "file",
+									"src": "/path/to/gambar-alat.png",
+									"description": "File gambar alat (PNG, JPG, dll)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/upload",
+							"host": ["{{base_url}}"],
+							"path": ["api", "upload"]
+						},
+						"description": "Upload foto alat. Gunakan form-data dengan key 'foto'. Response berisi file_url yang bisa digunakan untuk field foto saat create/update alat."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Scan",
+			"item": [
+				{
+					"name": "Scan QR Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"qr_code\": \"QR_ALT-OPT-001_6849a1b2c3d4e\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/scan",
+							"host": ["{{base_url}}"],
+							"path": ["api", "scan"]
+						},
+						"description": "Mencari data alat berdasarkan QR Code. QR Code di-generate saat alat dibuat."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Peminjaman",
+			"item": [
+				{
+					"name": "Booking Peminjaman",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"alat_id\": 1,\n    \"tanggal_pinjam\": \"2026-06-19\",\n    \"tanggal_kembali_rencana\": \"2026-06-26\",\n    \"jumlah\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/booking",
+							"host": ["{{base_url}}"],
+							"path": ["api", "booking"]
+						},
+						"description": "Membuat booking peminjaman alat. User ID diambil dari JWT token yang sedang login. Akan ditolak jika user memiliki denda belum lunas."
+					},
+					"response": []
+				},
+				{
+					"name": "Riwayat Peminjaman",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/peminjaman/riwayat?search=mikroskop&user_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "peminjaman", "riwayat"],
+							"query": [
+								{
+									"key": "search",
+									"value": "mikroskop",
+									"description": "Pencarian berdasarkan nama alat atau detail peminjaman"
+								},
+								{
+									"key": "user_id",
+									"value": "1",
+									"description": "Filter berdasarkan user ID (hanya untuk Admin)"
+								}
+							]
+						},
+						"description": "Mengambil riwayat peminjaman. Jika role bukan Admin, hanya menampilkan riwayat user yang sedang login."
+					},
+					"response": []
+				},
+				{
+					"name": "Persetujuan Peminjaman (Disetujui)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"status\": \"Disetujui\",\n    \"catatan_pinjaman\": \"Disetujui oleh admin. Harap dijaga dengan baik.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/peminjaman/persetujuan",
+							"host": ["{{base_url}}"],
+							"path": ["api", "peminjaman", "persetujuan"]
+						},
+						"description": "Menyetujui peminjaman. Membutuhkan role Admin. Status hanya bisa diubah dari 'Menunggu'."
+					},
+					"response": []
+				},
+				{
+					"name": "Persetujuan Peminjaman (Ditolak)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 2,\n    \"status\": \"Ditolak\",\n    \"catatan_pinjaman\": \"Ditolak karena stok alat sedang dialokasikan untuk praktikum.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/peminjaman/persetujuan",
+							"host": ["{{base_url}}"],
+							"path": ["api", "peminjaman", "persetujuan"]
+						},
+						"description": "Menolak peminjaman. Stok alat akan dikembalikan otomatis. Membutuhkan role Admin."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pengembalian",
+			"item": [
+				{
+					"name": "Pengembalian Alat (Baik)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"peminjaman_id\": 1,\n    \"tanggal_kembali_aktual\": \"2026-06-26\",\n    \"kondisi_alat\": \"baik\",\n    \"jumlah_kembali\": 2,\n    \"catatan_pengembalian\": \"Alat dikembalikan dalam kondisi baik, lengkap semua.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pengembalian",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pengembalian"]
+						},
+						"description": "Mengembalikan alat dalam kondisi baik. Denda keterlambatan dihitung otomatis jika melewati tanggal rencana."
+					},
+					"response": []
+				},
+				{
+					"name": "Pengembalian Alat (Rusak)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"peminjaman_id\": 2,\n    \"tanggal_kembali_aktual\": \"2026-06-28\",\n    \"kondisi_alat\": \"rusak\",\n    \"jumlah_kembali\": 1,\n    \"catatan_pengembalian\": \"Lensa objektif pecah saat digunakan untuk praktikum.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pengembalian",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pengembalian"]
+						},
+						"description": "Mengembalikan alat dalam kondisi rusak. Denda rusak + denda keterlambatan (jika ada) akan dikenakan."
+					},
+					"response": []
+				},
+				{
+					"name": "Pengembalian Alat (Hilang)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"peminjaman_id\": 3,\n    \"tanggal_kembali_aktual\": \"2026-06-30\",\n    \"kondisi_alat\": \"hilang\",\n    \"jumlah_kembali\": 0,\n    \"catatan_pengembalian\": \"Alat hilang saat penyimpanan di loker laboratorium.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pengembalian",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pengembalian"]
+						},
+						"description": "Melaporkan alat hilang. Denda hilang akan dikenakan. Stok alat TIDAK dikembalikan."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Denda",
+			"item": [
+				{
+					"name": "Get All Denda (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/admin/denda?search=Budi",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "denda"],
+							"query": [
+								{
+									"key": "search",
+									"value": "Budi",
+									"description": "Pencarian berdasarkan nama user atau detail denda"
+								}
+							]
+						},
+						"description": "Mengambil semua data denda. Membutuhkan role Admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Denda User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/user/denda?search=Terlambat",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "denda"],
+							"query": [
+								{
+									"key": "search",
+									"value": "Terlambat",
+									"description": "Pencarian berdasarkan jenis denda atau keterangan"
+								}
+							]
+						},
+						"description": "Mengambil data denda untuk user yang sedang login."
+					},
+					"response": []
+				},
+				{
+					"name": "Pelunasan Denda (User)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/denda/bayar",
+							"host": ["{{base_url}}"],
+							"path": ["api", "denda", "bayar"]
+						},
+						"description": "Pelunasan denda oleh user. Mengirim ID dari tabel tb_denda."
+					},
+					"response": []
+				},
+				{
+					"name": "Pelunasan Denda (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/denda/lunas",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "denda", "lunas"]
+						},
+						"description": "Pelunasan denda oleh Admin. Membutuhkan role Admin. Mengirim ID dari tabel tb_denda."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
