@@ -205,6 +205,7 @@ $items = array_map(function ($item) {
             }
         }
     }
+    sort($all_categories);
     ?>
 
     <div class="search-katalog" style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -465,6 +466,12 @@ $items = array_map(function ($item) {
             .detail-img-carousel.dragging img {
                 pointer-events: none;
             }
+
+            #modal-jumlah::-webkit-inner-spin-button,
+            #modal-jumlah::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
         </style>
         <div style="position: relative; margin-bottom: 15px;">
             <div id="modal-carousel" class="detail-img-carousel"
@@ -480,28 +487,31 @@ $items = array_map(function ($item) {
                     class="fa-solid fa-chevron-right"></i></button>
         </div>
 
-        <div class="detail-body">
-            <h2 id="modal-nama"></h2>
-            <p id="modal-deskripsi"></p>
+        <div class="detail-body" style="padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <h2 id="modal-nama" style="font-size: 22px; color: #0f172a; margin: 0; font-weight: 800;"></h2>
+                <span
+                    style="background: #e0f2fe; color: #0284c7; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; white-space: nowrap; margin-left: 10px;">Stok:
+                    <span id="modal-stok"></span></span>
+            </div>
+            <p id="modal-deskripsi" style="color: #94a3b8; font-size: 14px; margin-bottom: 25px; line-height: 1.5;"></p>
 
-            <div class="info-box">
-                <p><b>Stok :</b> <span id="modal-stok"></span> Unit</p>
-                <p><b>Denda per hari :</b> Rp <span id="modal-denda-hari"></span></p>
-                <p><b>Denda rusak :</b> Rp <span id="modal-denda-rusak"></span></p>
-                <p><b>Denda hilang :</b> Rp <span id="modal-denda-hilang"></span></p>
+            <h4 style="font-size: 15px; color: #0f172a; margin-bottom: 12px; font-weight: 800;">Ketentuan denda:</h4>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+                <span style="color: #94a3b8; font-weight: 600;">Denda per hari</span>
+                <span style="font-weight: 800; color: #0f172a;">Rp <span id="modal-denda-hari"></span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
+                <span style="color: #94a3b8; font-weight: 600;">Denda rusak</span>
+                <span style="font-weight: 800; color: #0f172a;">Rp <span id="modal-denda-rusak"></span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 14px;">
+                <span style="color: #94a3b8; font-weight: 600;">Denda hilang</span>
+                <span style="font-weight: 800; color: #0f172a;">Rp <span id="modal-denda-hilang"></span></span>
             </div>
 
             <form class="form-pinjam" method="POST" action="katalog.php">
                 <input type="hidden" name="id" id="modal-id">
-
-                <div class="info-box" style="margin-bottom: 20px;">
-                    <center>
-                        <img id="modal-qr" src="" alt="QR Code Alat">
-                        <p style="font-size:12px; color:#666; margin-top:5px;">Kode Alat: <span id="modal-kode"></span>
-                        </p>
-                    </center>
-                </div>
-
                 <?php if ($role !== 'admin'): ?>
                     <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Tanggal Pinjam</label>
                     <input type="date" name="tgl_pinjam" required class="form-control"
@@ -652,8 +662,11 @@ $items = array_map(function ($item) {
         document.getElementById('modal-denda-rusak').innerText = formatRupiah(item.denda_rusak);
         document.getElementById('modal-denda-hilang').innerText = formatRupiah(item.denda_hilang);
 
-        document.getElementById('modal-kode').innerText = item.qr_code;
-        document.getElementById('modal-qr').src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(item.qr_code);
+        const modalKode = document.getElementById('modal-kode');
+        if (modalKode) modalKode.innerText = item.qr_code;
+
+        const modalQr = document.getElementById('modal-qr');
+        if (modalQr) modalQr.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(item.qr_code);
 
         document.getElementById('detailModal').classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -1122,5 +1135,3 @@ $items = array_map(function ($item) {
         });
     }
 </script>
-
-<?php include 'includes/footer.php'; ?>

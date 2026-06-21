@@ -530,6 +530,11 @@ body {
     color: #856404;
 }
 
+.badge-active {
+    background: #60a5fa;
+    color: #fff;
+}
+
 /* Katalog Grid */
 .katalog-container {
     padding: 25px;
@@ -644,6 +649,7 @@ body {
     text-decoration: none;
     transition: 0.2s;
 }
+
 .link-cta:hover {
     color: var(--primary-dark);
     text-decoration: underline;
@@ -725,6 +731,7 @@ body {
     background: #dc2626;
     color: var(--white);
 }
+
 /* Modal Overlay & Styling */
 .modal-overlay {
     position: fixed;

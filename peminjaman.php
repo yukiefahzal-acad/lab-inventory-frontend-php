@@ -11,8 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
 
     if ($role === 'admin' && ($action === 'approve' || $action === 'reject')) {
         $status = ($action === 'approve') ? 'Disetujui' : 'Ditolak';
-        $catatan_default = ($action === 'approve') ? 'Disetujui oleh admin' : 'Ditolak oleh admin';
-        $catatan = !empty($_POST['catatan_pinjaman']) ? $_POST['catatan_pinjaman'] : $catatan_default;
+        $catatan = !empty($_POST['catatan_pinjaman']) ? $_POST['catatan_pinjaman'] : "";
 
         $response = call_api('PUT', '/api/peminjaman/persetujuan', [
             'id' => $id,
@@ -169,6 +168,15 @@ foreach ($all_loans as $loan) {
         <?php unset($_SESSION['flash_message']); ?>
     <?php endif; ?>
 
+    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 25px;">
+        <div style="position: relative; width: 320px;">
+            <i class="fa-solid fa-search"
+                style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;"></i>
+            <input type="text" id="searchInputRiwayat" oninput="filterRiwayat()" placeholder="Cari ..."
+                style="width: 100%; padding: 12px 15px 12px 40px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 14px; outline: none; transition: 0.2s ease;">
+        </div>
+    </div>
+
     <h3 style="margin-bottom: 15px; font-weight: 800; color: #0f172a;">Menunggu Verifikasi</h3>
     <?php if (empty($pending_list)): ?>
         <div class="riwayat-card" style="text-align: center; padding: 30px;">
@@ -203,7 +211,7 @@ foreach ($all_loans as $loan) {
                         <?php if ($role === 'admin'): ?>
                             <button class="btn-detail-table">Lihat & Verifikasi</button>
                         <?php else: ?>
-                            <span class="badge badge-warning">Diproses Admin</span>
+                            <span class="badge badge-warning">Menunggu</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -217,7 +225,7 @@ foreach ($all_loans as $loan) {
             <p style="color: #64748b;">Tidak ada data peminjaman.</p>
         </div>
     <?php else: ?>
-        <div class="list-ke-bawah-container">
+        <div class="list-ke-bawah-container" id="riwayat-list-container">
             <div class="list-header-row">
                 <div>Alat</div>
                 <div></div>
@@ -263,7 +271,7 @@ foreach ($all_loans as $loan) {
                         <?php
                         $badge_class = 'badge-success';
                         if ($loan['status'] === 'Aktif') {
-                            $badge_class = 'badge-warning';
+                            $badge_class = 'badge-active';
                         } elseif ($loan['status'] === 'Belum Lunas' || $loan['status'] === 'Ditolak') {
                             $badge_class = 'badge-danger';
                         }
@@ -475,6 +483,20 @@ foreach ($all_loans as $loan) {
             closePeminjamanModal();
         }
     });
-</script>
 
-<?php include 'includes/footer.php'; ?>
+    function filterRiwayat() {
+        let input = document.getElementById('searchInputRiwayat').value.toLowerCase();
+        let container = document.querySelector('.riwayat-container');
+        if (!container) return;
+
+        let items = container.querySelectorAll('.list-item-row');
+        items.forEach(function (item) {
+            let text = item.innerText.toLowerCase();
+            if (text.includes(input)) {
+                item.style.setProperty('display', 'grid', 'important');
+            } else {
+                item.style.setProperty('display', 'none', 'important');
+            }
+        });
+    }
+</script>

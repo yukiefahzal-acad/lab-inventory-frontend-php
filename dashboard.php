@@ -11,9 +11,13 @@ $all_alat = $res_alat['data'] ?? [];
 $total_alat = count($all_alat);
 
 $alat_dict = [];
+$gambar_dict = [];
 foreach ($all_alat as $a) {
     if (!empty($a['nama_alat'])) {
         $alat_dict[$a['nama_alat']] = $a['kode_alat'] ?? '-';
+        $fotoStr = $a['foto'] ?? '';
+        $fotoArr = $fotoStr ? explode('|', $fotoStr) : [];
+        $gambar_dict[$a['nama_alat']] = !empty($fotoArr[0]) ? $fotoArr[0] : 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=600';
     }
 }
 
@@ -93,7 +97,7 @@ foreach ($denda_list as $denda) {
                 </div>
                 <div class="stat-card">
                     <h3><?= $total_pinjaman_aktif ?></h3>
-                    <p>Pinjaman</p>
+                    <p>Peminjaman</p>
                 </div>
                 <div class="stat-card">
                     <h3><?= $total_pengembalian ?></h3>
@@ -107,11 +111,11 @@ foreach ($denda_list as $denda) {
 
             <div class="section">
                 <div class="section-title">
-                    <h3>Pinjaman Aktif</h3>
+                    <h3>Peminjaman Aktif</h3>
                 </div>
                 <?php if (empty($pinjaman_aktif_admin)): ?>
                     <div class="card-item">
-                        <p>Tidak ada pinjaman aktif.</p>
+                        <p>Tidak ada peminjaman aktif.</p>
                     </div>
                 <?php else: ?>
                     <div
@@ -161,7 +165,8 @@ foreach ($denda_list as $denda) {
                             </div>
                             <div style="width: 30%;">
                                 <strong><?= htmlspecialchars($loan['jenis_denda'] ?? '-') ?></strong><br>
-                                <span style="color: #ef4444; font-weight: 600;">Rp <?= number_format($loan['jumlah_denda'] ?? $loan['denda'] ?? 0, 0, ',', '.') ?></span>
+                                <span style="color: #ef4444; font-weight: 600;">Rp
+                                    <?= number_format($loan['jumlah_denda'] ?? $loan['denda'] ?? 0, 0, ',', '.') ?></span>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -179,12 +184,14 @@ foreach ($denda_list as $denda) {
         <div class="stats-grid">
             <div class="stat-card">
                 <h3><?= count($user_pinjaman_aktif) ?></h3>
-                <p>Pinjaman Aktif</p>
+                <p>Peminjaman Aktif</p>
             </div>
             <div class="stat-card">
                 <h3><?= count($user_riwayat) ?></h3>
                 <p>Riwayat Selesai</p>
             </div>
+            <!-- Dummy child ke-3 agar Total Denda menjadi child ke-4 (merah) -->
+            <div style="display: none;"></div>
             <div class="stat-card">
                 <h3>Rp<?= number_format($user_total_denda / 1000, 0, ',', '.') ?>K</h3>
                 <p>Total Denda</p>
@@ -192,34 +199,43 @@ foreach ($denda_list as $denda) {
         </div>
 
         <div class="section" style="margin-bottom: 30px;">
-            <div class="section-title" style="margin-bottom: 15px;">
-                <h3>Status Pinjaman Aktif</h3>
+            <div class="section-title"
+                style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <h3>Peminjaman Aktif</h3>
+                <a href="peminjaman.php" class="badge-category" style="text-decoration: none;">Lihat Semua &gt;</a>
             </div>
 
             <?php if (empty($user_pinjaman_aktif)): ?>
                 <div class="card-item" style="padding: 20px; text-align: center; color: #666;">
-                    <p>Tidak ada pinjaman aktif.</p>
+                    <p>Tidak ada peminjaman aktif.</p>
                 </div>
 
             <?php else: ?>
-                <div
-                    style="display: flex; width: 100%; padding: 0 20px 10px 20px; font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase;">
-                    <div style="width: 30%;">Tanggal Pinjam</div>
-                    <div style="width: 40%;">Nama Alat</div>
-                    <div style="width: 30%; text-align: right;">Status</div>
-                </div>
-
-                <?php foreach ($user_pinjaman_aktif as $loan): ?>
+                <?php foreach (array_slice($user_pinjaman_aktif, 0, 5) as $loan): ?>
+                    <?php
+                    $nama_alat = $loan['nama_alat'] ?? 'Unknown';
+                    $kode = $alat_dict[$nama_alat] ?? $loan['kode_alat'] ?? '-';
+                    $img = $gambar_dict[$nama_alat] ?? 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=600';
+                    ?>
                     <div class="card-item"
-                        style="display: flex; align-items: center; width: 100%; padding: 15px 20px; margin-bottom: 8px;">
-                        <div style="width: 30%; font-size: 14px;">
-                            <?= date('d/m/Y', strtotime($loan['tanggal_pinjam'] ?? $loan['tgl_pinjam'] ?? 'now')) ?></div>
-                        <div style="width: 40%;">
-                            <div style="font-weight: 600;"><?= htmlspecialchars($loan['nama_alat'] ?? 'Unknown') ?></div>
-                            <small style="color: #666;">Kode: <?= htmlspecialchars($loan['kode_alat'] ?? '-') ?></small>
+                        style="display: flex; padding: 20px; align-items: center; margin-bottom: 15px; border-radius: 16px;">
+                        <div
+                            style="width: 80px; height: 80px; background: #ffffff; border-radius: 12px; margin-right: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <img src="<?= htmlspecialchars($img) ?>"
+                                style="max-width: 100%; max-height: 100%; object-fit: contain;">
                         </div>
-                        <div style="width: 30%; text-align: right;">
-                            <span class="status status-success">Aktif</span>
+                        <div style="flex: 1; font-size: 13px; color: #64748b; line-height: 1.6;">
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 5px;">
+                                Kode: <?= htmlspecialchars($kode) ?>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="display: inline-block; width: 85px;">Dipinjam:</span>
+                                <?= date('Y-m-d', strtotime($loan['tanggal_pinjam'] ?? $loan['tgl_pinjam'] ?? 'now')) ?>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <span style="display: inline-block; width: 85px;">Jatuh tempo:</span>
+                                <?= date('Y-m-d', strtotime($loan['tanggal_kembali_rencana'] ?? $loan['tgl_kembali'] ?? 'now')) ?>
+                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -228,32 +244,39 @@ foreach ($denda_list as $denda) {
 
         <div class="section">
             <div class="section-title" style="margin-bottom: 15px;">
-                <h3>Riwayat Peminjaman</h3>
+                <h3>Manajemen Denda</h3>
             </div>
 
-            <div
-                style="display: flex; width: 100%; padding: 0 20px 10px 20px; font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase;">
-                <div style="width: 30%;">Tanggal Pinjam</div>
-                <div style="width: 40%;">Nama Alat</div>
-                <div style="width: 30%; text-align: right;">Status</div>
-            </div>
+            <div class="card-item" style="padding: 20px;">
+                <div style="font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 15px;">
+                    Rp <?= number_format($user_total_denda, 0, ',', '.') ?>
+                </div>
+                <div style="font-size: 14px; margin-bottom: 20px; color: #64748b;">
+                    Status:
+                    <?php if ($user_total_denda == 0): ?>
+                        <span style="color: #10b981; font-weight: 600;">Lunas</span>
+                    <?php else: ?>
+                        <span style="color: #ef4444; font-weight: 600;">Belum Lunas</span>
+                    <?php endif; ?>
+                </div>
 
-            <?php foreach (array_slice($user_riwayat, 0, 2) as $loan): ?>
-                <div class="card-item"
-                    style="display: flex; align-items: center; width: 100%; padding: 15px 20px; margin-bottom: 8px;">
-                    <div style="width: 30%; font-size: 14px;">
-                        <?= date('d/m/Y', strtotime($loan['tanggal_pinjam'] ?? $loan['tgl_pinjam'] ?? 'now')) ?></div>
-                    <div style="width: 40%; font-weight: 600;"><?= htmlspecialchars($loan['nama_alat'] ?? 'Unknown') ?></div>
-                    <div style="width: 30%; text-align: right;">
-                        <span
-                            class="status <?= ($loan['status'] === 'Selesai' || $loan['status'] === 'Dikembalikan') ? 'status-success' : 'status-danger' ?>">
-                            <?= htmlspecialchars($loan['status']) ?>
-                        </span>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 15px;">
+
+                <div
+                    style="display: flex; align-items: flex-start; gap: 10px; color: #64748b; font-size: 12px; line-height: 1.5;">
+                    <div style="margin-top: 2px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        Bayar denda tepat waktu untuk menghindari pembatasan peminjaman!
                     </div>
                 </div>
-            <?php endforeach; ?>
+            </div>
         </div>
     <?php endif; ?>
 </div>
-
-<?php include 'includes/footer.php'; ?>

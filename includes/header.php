@@ -55,7 +55,7 @@ $page_title = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? "Adm
             'dashboard.php' => 'Dashboard',
             'katalog.php' => ($role_header === 'admin' ? 'Kelola Alat' : 'Katalog Alat'),
             'riwayat.php' => 'Riwayat Peminjaman',
-            'peminjaman.php' => 'Manajemen Peminjaman',
+            'peminjaman.php' => ($role_header === 'admin' ? 'Manajemen Peminjaman' : 'Riwayat'),
             'verifikasi.php' => 'Verifikasi Pengembalian',
             'scanqr.php' => 'Scan QR',
             'tambah_alat.php' => 'Tambah Alat',
@@ -94,16 +94,13 @@ $page_title = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? "Adm
                             </div>
                             <?php if ($role_header !== 'admin'): ?>
                                 <div class="dropdown-body">
-                                    <p><span>Denda Belum Lunas</span> <b>Rp
+                                    <p><span>Denda Belum Dibayar</span> <b>Rp
                                             <?= number_format($user_total_denda_header, 0, ',', '.') ?></b></p>
-                                    <p><span>Status</span>
-                                        <?= $user_total_denda_header > 0 ? '<span style="color:#d60000; font-weight:700;">Belum Lunas</span>' : '<span style="color:#0d8d3a; font-weight:700;">Lunas</span>' ?>
-                                    </p>
                                 </div>
                             <?php endif; ?>
                             <div class="dropdown-footer">
                                 <a href="login.php?action=logout" class="btn-logout-small"><i
-                                        class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                                        class="fa-solid fa-right-from-bracket"></i> Keluar</a>
                             </div>
                         </div>
                     </div>
