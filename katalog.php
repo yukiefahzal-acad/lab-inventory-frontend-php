@@ -286,16 +286,16 @@ $items = array_map(function ($item) {
                         <p><?= htmlspecialchars(substr($item['deskripsi'], 0, 50)) ?>...</p>
                         <?php if ($role === 'admin'): ?>
                             <div style="display:flex; gap:10px; margin-top: auto;">
-                                <button onclick='openEditModal(<?= htmlspecialchars($js_item, ENT_QUOTES, "UTF-8") ?>, event)'
-                                    class="btn-detail"
-                                    style="flex:1; padding: 8px; font-size: 13px; text-align: center; border:none; cursor:pointer;">
-                                    Edit
-                                </button>
                                 <a href="javascript:void(0)" onclick="event.stopPropagation(); confirmDelete(<?= $item['id'] ?>);"
                                     class="btn-detail"
                                     style="flex:1; background:#ef4444; color:#ffffff; padding: 8px; font-size: 13px; text-align: center; text-decoration: none;">
                                     Hapus
                                 </a>
+                                <button onclick='openEditModal(<?= htmlspecialchars($js_item, ENT_QUOTES, "UTF-8") ?>, event)'
+                                    class="btn-detail"
+                                    style="flex:1; padding: 8px; font-size: 13px; text-align: center; border:none; cursor:pointer;">
+                                    Ubah
+                                </button>
                             </div>
                         <?php else: ?>
                             <button onclick='openDetailModal(<?= htmlspecialchars($js_item, ENT_QUOTES, "UTF-8") ?>)'
@@ -321,11 +321,21 @@ $items = array_map(function ($item) {
         <span class="close-btn" onclick="closeEditModal()">&times;</span>
 
         <div class="detail-body">
-            <h2 style="margin-bottom: 20px;">Edit Data Alat</h2>
+            <h2 style="margin-bottom: 20px;">Ubah Data Alat</h2>
             <form class="form-pinjam" method="POST" action="katalog.php" enctype="multipart/form-data"
                 onsubmit="return validateForm('edit')">
                 <input type="hidden" name="edit_id" id="edit-id">
                 <input type="hidden" name="existing_foto" id="edit-existing-foto">
+
+                <div class="photo-upload-grid" id="edit-photo-grid"></div>
+                <div id="edit-photo-inputs" style="display: none;"></div>
+                <p id="edit-foto-error"
+                    style="color: #ef4444; font-size: 12px; margin-top: 5px; margin-bottom: 15px; display: none;">Ukuran
+                    gambar melebihi 5MB</p>
+
+                <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Upload Gambar Alat
+                    (Hingga 6 gambar, maksimum 5MB per gambar)</label>
+
 
                 <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Kode Alat</label>
                 <input type="text" name="kode_alat" id="edit-kode" class="form-control" required
@@ -334,6 +344,10 @@ $items = array_map(function ($item) {
                 <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Nama Alat</label>
                 <input type="text" name="nama" id="edit-nama" class="form-control" required
                     style="margin-bottom:15px; height:45px;">
+
+                <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Deskripsi Alat</label>
+                <textarea name="deskripsi" id="edit-deskripsi" class="form-control" rows="5" required
+                    style="margin-bottom:20px; height:auto; padding: 10px 15px;"></textarea>
 
                 <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Kategori Alat</label>
                 <div id="edit-kategori-container" class="category-tags-container"></div>
@@ -365,21 +379,11 @@ $items = array_map(function ($item) {
                 <input type="text" name="denda_hilang" id="edit-denda-hilang" class="form-control format-rupiah"
                     required style="margin-bottom:15px; height:45px;">
 
-                <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Deskripsi Alat</label>
-                <textarea name="deskripsi" id="edit-deskripsi" class="form-control" rows="5" required
-                    style="margin-bottom:20px; height:auto; padding: 10px 15px;"></textarea>
 
-                <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Upload Gambar Alat
-                    (Hingga 6 gambar, maksimum 5MB per gambar)</label>
-                <div class="photo-upload-grid" id="edit-photo-grid"></div>
-                <div id="edit-photo-inputs" style="display: none;"></div>
-                <p id="edit-foto-error"
-                    style="color: #ef4444; font-size: 12px; margin-top: 5px; margin-bottom: 15px; display: none;">Ukuran
-                    gambar melebihi 5MB</p>
 
                 <button type="submit" name="edit_submit" class="btn-primary"
                     style="width:100%; border:none; cursor:pointer; margin-top: 15px;">
-                    Update Data
+                    Simpan Perubahan
                 </button>
             </form>
         </div>
@@ -394,13 +398,26 @@ $items = array_map(function ($item) {
         <div class="detail-body">
             <h2 style="margin-bottom:20px; text-align: center;">Tambah Alat Baru</h2>
 
+            <div class="photo-upload-grid" id="tambah-photo-grid"></div>
+            <div id="tambah-photo-inputs" style="display: none;"></div>
+            <p id="tambah-foto-error"
+                style="color: #ef4444; font-size: 12px; margin-top: 5px; margin-bottom: 15px; display: none;">Ukuran
+                gambar melebihi 5MB</p>
+            <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Upload Gambar Alat (Hingga
+                6 gambar, maksimum 5MB per gambar)</label>
+
             <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Kode Alat</label>
             <input type="text" name="kode_alat" class="form-control" placeholder="Kode Alat (contoh: ALT-001)" required
                 style="margin-bottom:15px; height:50px;">
 
             <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Nama Alat</label>
+
             <input type="text" name="nama" class="form-control" placeholder="Nama Alat" required
                 style="margin-bottom:15px; height:50px;">
+
+            <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Deskripsi Alat</label>
+            <textarea name="deskripsi" class="form-control" rows="5" placeholder="Deskripsi" required
+                style="margin-bottom:15px; height:auto; padding: 10px 15px;"></textarea>
 
             <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Kategori Alat</label>
             <div id="tambah-kategori-container" class="category-tags-container"></div>
@@ -429,18 +446,6 @@ $items = array_map(function ($item) {
             <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Denda Hilang (Rp)</label>
             <input type="text" name="denda_hilang" class="form-control format-rupiah" placeholder="Denda Hilang"
                 required style="margin-bottom:15px; height:50px;">
-
-            <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Deskripsi Alat</label>
-            <textarea name="deskripsi" class="form-control" rows="5" placeholder="Deskripsi" required
-                style="margin-bottom:15px; height:auto; padding: 10px 15px;"></textarea>
-
-            <label style="font-weight:600; font-size:13px; display:block; margin-bottom:5px;">Upload Gambar Alat (Hingga
-                6 gambar, maksimum 5MB per gambar)</label>
-            <div class="photo-upload-grid" id="tambah-photo-grid"></div>
-            <div id="tambah-photo-inputs" style="display: none;"></div>
-            <p id="tambah-foto-error"
-                style="color: #ef4444; font-size: 12px; margin-top: 5px; margin-bottom: 15px; display: none;">Ukuran
-                gambar melebihi 5MB</p>
 
             <button type="submit" name="tambah_submit" class="btn-primary" style="width:100%; margin-top: 15px;">
                 Simpan Alat

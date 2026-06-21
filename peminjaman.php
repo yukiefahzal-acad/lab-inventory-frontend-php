@@ -209,13 +209,14 @@ foreach ($all_loans as $loan) {
                     <div class="data-text"><?= htmlspecialchars($pending['jumlah']) ?> Unit</div>
                     <div>
                         <?php if ($role === 'admin'): ?>
-                            <button class="btn-detail-table">Lihat & Verifikasi</button>
+                            <button class="btn-warning-table">Belum Verifikasi</button>
                         <?php else: ?>
                             <span class="badge badge-warning">Menunggu</span>
                         <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
+            <div class="no-data-msg" style="display: none; text-align: center; padding: 20px; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 4px 12px rgba(15,23,42,0.03); margin-top: 10px;">Data pencarian tidak ditemukan.</div>
         </div>
     <?php endif; ?>
 
@@ -284,6 +285,7 @@ foreach ($all_loans as $loan) {
                     </div>
                 </div>
             <?php endforeach; ?>
+            <div class="no-data-msg" style="display: none; text-align: center; padding: 20px; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 4px 12px rgba(15,23,42,0.03); margin-top: 10px;">Data pencarian tidak ditemukan.</div>
         </div>
     <?php endif; ?>
 
@@ -297,10 +299,26 @@ foreach ($all_loans as $loan) {
             <h2 id="v-modal-nama-alat" style="margin-bottom: 5px;"></h2>
             <p id="v-modal-spesifikasi" style="font-size: 13px; color: #64748b; margin-bottom: 20px;"></p>
             <div class="info-box" style="margin-bottom: 20px;">
-                <p><b>Peminjam :</b> <span id="v-modal-mahasiswa"></span></p>
-                <p><b>Tanggal Pinjam :</b> <span id="v-modal-tgl-pinjam"></span></p>
-                <p><b>Tanggal Kembali :</b> <span id="v-modal-tgl-kembali"></span></p>
-                <p><b>Jumlah :</b> <span id="v-modal-jumlah"></span> Unit</p>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Peminjam</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="v-modal-mahasiswa"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Tanggal Pinjam</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="v-modal-tgl-pinjam"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Tanggal Kembali</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="v-modal-tgl-kembali"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Jumlah</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="v-modal-jumlah"></span> Unit</div>
+                </div>
             </div>
             <form method="POST" action="peminjaman.php">
                 <input type="hidden" name="id" id="v-modal-id">
@@ -335,16 +353,42 @@ foreach ($all_loans as $loan) {
             <h2 id="p-modal-nama-alat" style="margin-bottom: 5px;"></h2>
             <p id="p-modal-spesifikasi" style="font-size: 13px; color: #64748b; margin-bottom: 20px;"></p>
             <div class="info-box" style="margin-bottom: 20px;">
-                <p><b>Peminjam :</b> <span id="p-modal-user"></span></p>
-                <p><b>Tanggal Pinjam :</b> <span id="p-modal-tgl-pinjam"></span></p>
-                <p><b>Tanggal Kembali :</b> <span id="p-modal-tgl-kembali"></span></p>
-                <p><b>Jumlah Pinjam :</b> <span id="p-modal-jumlah"></span> Unit</p>
-                <p><b>Catatan Alat :</b> <span id="p-modal-catatan-alat"></span></p>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Peminjam</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-user"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Tanggal Pinjam</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-tgl-pinjam"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Tanggal Kembali</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-tgl-kembali"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Jumlah Pinjam</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-jumlah"></span> Unit</div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Catatan Alat</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-catatan-alat"></span></div>
+                </div>
                 <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
-                <p><b>Status :</b> <span id="p-modal-status" style="font-weight: 800;"></span></p>
-                <p id="p-modal-denda-container" style="display: none; color: #ff4d4d;">
-                    <b>Total Denda :</b> Rp <span id="p-modal-denda"></span>
-                </p>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Status</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-status" style="font-weight: 800;"></span></div>
+                </div>
+                <div id="p-modal-denda-container" style="display: none; margin-bottom: 8px; align-items: flex-start; color: #ef4444;">
+                    <div style="width: 130px; font-weight: bold;">Total Denda</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right; font-weight: bold;">Rp <span id="p-modal-denda"></span></div>
+                </div>
             </div>
             <form method="POST" action="peminjaman.php" id="p-modal-form" style="display: none;">
                 <input type="hidden" name="id" id="p-modal-id">
@@ -443,7 +487,7 @@ foreach ($all_loans as $loan) {
         const dendaContainer = document.getElementById('p-modal-denda-container');
         if (item.denda > 0) {
             document.getElementById('p-modal-denda').innerText = formatRupiah(item.denda);
-            dendaContainer.style.display = 'block';
+            dendaContainer.style.display = 'flex';
         } else {
             dendaContainer.style.display = 'none';
         }
@@ -486,16 +530,29 @@ foreach ($all_loans as $loan) {
 
     function filterRiwayat() {
         let input = document.getElementById('searchInputRiwayat').value.toLowerCase();
-        let container = document.querySelector('.riwayat-container');
-        if (!container) return;
-
-        let items = container.querySelectorAll('.list-item-row');
-        items.forEach(function (item) {
-            let text = item.innerText.toLowerCase();
-            if (text.includes(input)) {
-                item.style.setProperty('display', 'grid', 'important');
-            } else {
-                item.style.setProperty('display', 'none', 'important');
+        let lists = document.querySelectorAll('.list-ke-bawah-container');
+        
+        lists.forEach(function(list) {
+            let items = list.querySelectorAll('.list-item-row');
+            let hasVisible = false;
+            
+            items.forEach(function (item) {
+                let text = item.innerText.toLowerCase();
+                if (text.includes(input)) {
+                    item.style.setProperty('display', 'grid', 'important');
+                    hasVisible = true;
+                } else {
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+            
+            let noDataMsg = list.querySelector('.no-data-msg');
+            if (noDataMsg) {
+                if (!hasVisible && items.length > 0) {
+                    noDataMsg.style.display = 'block';
+                } else {
+                    noDataMsg.style.display = 'none';
+                }
             }
         });
     }

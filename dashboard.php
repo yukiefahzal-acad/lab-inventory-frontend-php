@@ -110,8 +110,10 @@ foreach ($denda_list as $denda) {
             </div>
 
             <div class="section">
-                <div class="section-title">
+                <div class="section-title"
+                    style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                     <h3>Peminjaman Aktif</h3>
+                    <a href="peminjaman.php" class="badge-category" style="text-decoration: none;">Lihat Semua &gt;</a>
                 </div>
                 <?php if (empty($pinjaman_aktif_admin)): ?>
                     <div class="card-item">
@@ -150,8 +152,8 @@ foreach ($denda_list as $denda) {
                     <div
                         style="display: flex; width: 100%; padding: 0 20px 10px; font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase;">
                         <div style="width: 30%;">Peminjam</div>
-                        <div style="width: 40%;">Nama & Kode Alat</div>
-                        <div style="width: 30%;">Jenis & Jumlah Denda</div>
+                        <div style="width: 40%;">Nama Alat</div>
+                        <div style="width: 30%;">Denda</div>
                     </div>
                     <?php foreach ($denda_belum_bayar_admin as $loan): ?>
                         <?php $kode = $alat_dict[$loan['nama_alat'] ?? ''] ?? '-'; ?>

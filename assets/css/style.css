@@ -862,6 +862,22 @@ body {
     background: #85ceeb;
 }
 
+.btn-warning-table {
+    background: #ff9800;
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-warning-table:hover {
+    background: #e68a00;
+}
+
 /* UI Kategori & Upload Foto Baru */
 .photo-upload-grid {
     display: grid;
