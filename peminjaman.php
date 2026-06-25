@@ -118,6 +118,7 @@ foreach ($all_loans as $loan) {
         'tgl_kembali' => $tgl_kembali,
         'jumlah' => $loan['jumlah'] ?? 1,
         'status' => $loan['status'] ?? 'Menunggu',
+        'api_status' => $loan['status'] ?? 'Menunggu',
         'denda' => 0, // Akan di-update jika digabung dengan API denda
         'terlambat' => $terlambat,
         'catatan' => !empty($loan['catatan_pengembalian']) ? $loan['catatan_pengembalian'] : (!empty($loan['catatan_pinjaman']) ? $loan['catatan_pinjaman'] : '-')
@@ -521,7 +522,7 @@ foreach ($all_loans as $loan) {
         const actionBtn = document.getElementById('p-modal-action-btn');
         const pengembalianFields = document.getElementById('p-modal-pengembalian-fields');
 
-        if (item.status === 'Aktif') {
+        if (item.status === 'Aktif' || ((item.status === 'Belum Lunas' || item.status === 'Aktif') && (item.api_status === 'Dipinjam' || item.api_status === 'Disetujui'))) {
             form.style.display = 'block';
             pengembalianFields.style.display = 'block';
             actionBtn.value = 'verifikasi_kembali';
