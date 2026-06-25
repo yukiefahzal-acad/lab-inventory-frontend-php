@@ -295,7 +295,8 @@ foreach ($all_loans as $loan) {
                                 style="color: #ef4444; font-weight: 600; font-size: 12px;"><?= htmlspecialchars($loan['catatan']) ?></span>
                         <?php elseif ($loan['status'] === 'Lunas'): ?>
                             <span style="color: #10b981; font-weight: 600;">Lunas <br><span
-                                    style="font-size:11px; color:#64748b;">Denda Rp. <?= number_format($loan['denda'], 0, ',', '.') ?></span></span>
+                                    style="font-size:11px; color:#64748b;">Denda Rp.
+                                    <?= number_format($loan['denda'], 0, ',', '.') ?></span></span>
                         <?php else: ?>
                             <span style="color: #10b981; font-weight: 600;">Selesai <br><span
                                     style="font-size:11px; color:#64748b;"><?= htmlspecialchars($loan['catatan']) ?></span></span>
@@ -312,7 +313,9 @@ foreach ($all_loans as $loan) {
                         ?>
                         <span class="badge <?= $badge_class ?>"><?= htmlspecialchars($loan['status']) ?></span>
 
-                        <button class="btn-detail-table">Detail</button>
+                        <?php if ($role === 'admin'): ?>
+                            <button class="btn-detail-table">Detail</button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
