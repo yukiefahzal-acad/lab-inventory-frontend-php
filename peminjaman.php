@@ -81,9 +81,7 @@ $res_denda = call_api('GET', $denda_endpoint);
 $all_denda = $res_denda['data'] ?? [];
 $denda_dict = [];
 foreach ($all_denda as $d) {
-    if (($d['status_bayar'] ?? $d['status_pembayaran'] ?? $d['status'] ?? '') === 'Belum Lunas') {
-        $denda_dict[$d['peminjaman_id']] = $d;
-    }
+    $denda_dict[$d['peminjaman_id']] = $d;
 }
 
 foreach ($all_loans as $loan) {
@@ -121,14 +119,23 @@ foreach ($all_loans as $loan) {
         'api_status' => $loan['status'] ?? 'Menunggu',
         'denda' => 0, // Akan di-update jika digabung dengan API denda
         'terlambat' => $terlambat,
+        'catatan_pinjaman' => !empty($loan['catatan_pinjaman']) ? $loan['catatan_pinjaman'] : '-',
+        'catatan_kembali' => !empty($loan['catatan_pengembalian']) ? $loan['catatan_pengembalian'] : '-',
         'catatan' => !empty($loan['catatan_pengembalian']) ? $loan['catatan_pengembalian'] : (!empty($loan['catatan_pinjaman']) ? $loan['catatan_pinjaman'] : '-')
     ];
 
     $denda_info = $denda_dict[$loan['id']] ?? null;
     if ($denda_info) {
-        $mapped_loan['status'] = 'Belum Lunas';
-        $mapped_loan['denda'] = floatval($denda_info['jumlah_denda'] ?? $denda_info['denda'] ?? 0);
-        $mapped_loan['denda_id'] = $denda_info['id'] ?? null;
+        $status_bayar = $denda_info['status_bayar'] ?? $denda_info['status_pembayaran'] ?? $denda_info['status'] ?? '';
+        if ($status_bayar === 'Belum Lunas') {
+            $mapped_loan['status'] = 'Belum Lunas';
+            $mapped_loan['denda'] = floatval($denda_info['jumlah_denda'] ?? $denda_info['denda'] ?? 0);
+            $mapped_loan['denda_id'] = $denda_info['id'] ?? null;
+        } elseif ($status_bayar === 'Lunas') {
+            $mapped_loan['status'] = 'Lunas';
+            $mapped_loan['denda'] = floatval($denda_info['jumlah_denda'] ?? $denda_info['denda'] ?? 0);
+            $mapped_loan['denda_id'] = $denda_info['id'] ?? null;
+        }
     } elseif ($mapped_loan['terlambat'] > 0 && ($mapped_loan['status'] === 'Dipinjam' || $mapped_loan['status'] === 'Disetujui')) {
         $mapped_loan['status'] = 'Belum Lunas';
         $mapped_loan['denda'] = $mapped_loan['terlambat'] * 10000;
@@ -286,6 +293,9 @@ foreach ($all_loans as $loan) {
                         <?php elseif ($loan['status'] === 'Ditolak'): ?>
                             <span
                                 style="color: #ef4444; font-weight: 600; font-size: 12px;"><?= htmlspecialchars($loan['catatan']) ?></span>
+                        <?php elseif ($loan['status'] === 'Lunas'): ?>
+                            <span style="color: #10b981; font-weight: 600;">Lunas <br><span
+                                    style="font-size:11px; color:#64748b;">Denda Rp. <?= number_format($loan['denda'], 0, ',', '.') ?></span></span>
                         <?php else: ?>
                             <span style="color: #10b981; font-weight: 600;">Selesai <br><span
                                     style="font-size:11px; color:#64748b;"><?= htmlspecialchars($loan['catatan']) ?></span></span>
@@ -342,6 +352,11 @@ foreach ($all_loans as $loan) {
                     <div style="margin-right: 10px;">:</div>
                     <div style="flex: 1; text-align: right;"><span id="v-modal-jumlah"></span> Unit</div>
                 </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Catatan Pinjam</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="v-modal-catatan-pinjam"></span></div>
+                </div>
             </div>
             <form method="POST" action="peminjaman.php">
                 <input type="hidden" name="id" id="v-modal-id">
@@ -397,9 +412,14 @@ foreach ($all_loans as $loan) {
                     <div style="flex: 1; text-align: right;"><span id="p-modal-jumlah"></span> Unit</div>
                 </div>
                 <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
-                    <div style="width: 130px; font-weight: bold;">Catatan Alat</div>
+                    <div style="width: 130px; font-weight: bold;">Catatan Pinjam</div>
                     <div style="margin-right: 10px;">:</div>
-                    <div style="flex: 1; text-align: right;"><span id="p-modal-catatan-alat"></span></div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-catatan-pinjam"></span></div>
+                </div>
+                <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
+                    <div style="width: 130px; font-weight: bold;">Catatan Kembali</div>
+                    <div style="margin-right: 10px;">:</div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-catatan-kembali"></span></div>
                 </div>
                 <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
                 <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
@@ -480,6 +500,7 @@ foreach ($all_loans as $loan) {
         document.getElementById('v-modal-tgl-pinjam').innerText = formatDate(item.tgl_pinjam);
         document.getElementById('v-modal-tgl-kembali').innerText = formatDate(item.tgl_kembali);
         document.getElementById('v-modal-jumlah').innerText = item.jumlah;
+        document.getElementById('v-modal-catatan-pinjam').innerText = item.catatan_pinjaman || '-';
 
         document.getElementById('verifikasiModal').classList.add('show');
         document.body.style.overflow = 'hidden';
@@ -505,7 +526,8 @@ foreach ($all_loans as $loan) {
         document.getElementById('p-modal-tgl-pinjam').innerText = formatDate(item.tgl_pinjam);
         document.getElementById('p-modal-tgl-kembali').innerText = formatDate(item.tgl_kembali);
         document.getElementById('p-modal-jumlah').innerText = item.jumlah;
-        document.getElementById('p-modal-catatan-alat').innerText = item.catatan || '-';
+        document.getElementById('p-modal-catatan-pinjam').innerText = item.catatan_pinjaman || '-';
+        document.getElementById('p-modal-catatan-kembali').innerText = item.catatan_kembali || '-';
         document.getElementById('p-modal-status').innerText = item.status;
         document.getElementById('p-modal-input-jumlah').max = item.jumlah;
         document.getElementById('p-modal-input-jumlah').value = item.jumlah;
