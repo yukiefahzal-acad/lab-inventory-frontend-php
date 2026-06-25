@@ -5,6 +5,28 @@ $role = $_SESSION['role'] ?? 'user';
 $user_id = $_SESSION['id'] ?? 1;
 $nama = $_SESSION['nama'] ?? 'User';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['id'])) {
+    $id = intval($_POST['id']);
+    $action = $_POST['action'];
+    $msg = 'Status berhasil diperbarui.';
+
+    if ($action === 'lunas' && $role === 'admin') {
+        $response = call_api('PUT', '/api/admin/denda/lunas', [
+            'id' => $id
+        ]);
+
+        if (isset($response['http_code']) && $response['http_code'] >= 200 && $response['http_code'] < 300) {
+            $msg = 'Pembayaran denda telah lunas.';
+        } else {
+            $msg = 'Gagal: ' . ($response['message'] ?? 'Unknown error');
+        }
+    }
+    
+    $_SESSION['flash_message'] = $msg;
+    echo "<script>window.location.href='dashboard.php';</script>";
+    exit;
+}
+
 // 1. Get Total Alat
 $res_alat = call_api('GET', '/api/alat');
 $all_alat = $res_alat['data'] ?? [];
@@ -79,6 +101,24 @@ foreach ($denda_list as $denda) {
 ?>
 
 <div class="dashboard">
+
+    <?php
+    // Tampilkan flash message jika ada, menggunakan SweetAlert2
+    if (isset($_SESSION['flash_message'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var msg = <?= json_encode($_SESSION['flash_message']) ?>;
+                var isError = msg.indexOf('Gagal') !== -1;
+                Swal.fire({
+                    title: isError ? 'Gagal' : 'Berhasil',
+                    text: msg,
+                    icon: isError ? 'error' : 'success',
+                    confirmButtonColor: '#7dd3fc'
+                });
+            });
+        </script>
+        <?php unset($_SESSION['flash_message']); ?>
+    <?php endif; ?>
 
     <?php if ($role === 'admin'): ?>
         <div class="admin-dashboard">
@@ -157,8 +197,17 @@ foreach ($denda_list as $denda) {
                         <div style="width: 30%;">Denda</div>
                     </div>
                     <?php foreach ($denda_belum_bayar_admin as $loan): ?>
-                        <?php $kode = $alat_dict[$loan['nama_alat'] ?? ''] ?? '-'; ?>
-                        <div class="card-item" style="display: flex; align-items: center; padding: 15px 20px; margin-bottom: 8px;">
+                        <?php 
+                        $kode = $alat_dict[$loan['nama_alat'] ?? ''] ?? '-'; 
+                        $js_denda = json_encode([
+                            'id' => $loan['id'],
+                            'user' => $loan['nama_mahasiswa'] ?? $loan['user_nama'] ?? $loan['nama_user'] ?? 'User',
+                            'alat' => $loan['nama_alat'] ?? 'Unknown',
+                            'jenis' => $loan['jenis_denda'] ?? '-',
+                            'denda' => $loan['jumlah_denda'] ?? $loan['denda'] ?? 0
+                        ]);
+                        ?>
+                        <div class="card-item" style="display: flex; align-items: center; padding: 15px 20px; margin-bottom: 8px; cursor: pointer;" onclick='openDendaModal(<?= htmlspecialchars($js_denda, ENT_QUOTES, "UTF-8") ?>)'>
                             <div style="width: 30%;">
                                 <?= htmlspecialchars($loan['nama_mahasiswa'] ?? $loan['user_nama'] ?? $loan['nama_user'] ?? 'User') ?>
                             </div>
@@ -287,3 +336,68 @@ foreach ($denda_list as $denda) {
         </div>
     <?php endif; ?>
 </div>
+
+<div id="dendaModal" class="modal-overlay">
+    <div class="modal-content detail-card" style="padding: 25px; text-align: left;">
+        <span class="close-btn" onclick="closeDendaModal()">&times;</span>
+        <h3 style="margin-bottom: 20px; font-weight: 800; color: #0f172a;">Pelunasan Denda</h3>
+        <div class="info-box" style="margin-bottom: 20px; font-size: 14px;">
+            <div style="display: flex; margin-bottom: 8px;">
+                <div style="width: 120px; font-weight: bold;">Peminjam</div>
+                <div style="margin-right: 10px;">:</div>
+                <div style="flex: 1;" id="dm-peminjam"></div>
+            </div>
+            <div style="display: flex; margin-bottom: 8px;">
+                <div style="width: 120px; font-weight: bold;">Alat</div>
+                <div style="margin-right: 10px;">:</div>
+                <div style="flex: 1;" id="dm-alat"></div>
+            </div>
+            <div style="display: flex; margin-bottom: 8px;">
+                <div style="width: 120px; font-weight: bold;">Jenis Denda</div>
+                <div style="margin-right: 10px;">:</div>
+                <div style="flex: 1;" id="dm-jenis"></div>
+            </div>
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+            <div style="display: flex;">
+                <div style="width: 120px; font-weight: bold;">Total Denda</div>
+                <div style="margin-right: 10px;">:</div>
+                <div style="flex: 1; font-weight: bold; color: #ef4444;" id="dm-total"></div>
+            </div>
+        </div>
+        <form method="POST" action="dashboard.php">
+            <input type="hidden" name="action" value="lunas">
+            <input type="hidden" name="id" id="dm-id">
+            <button type="submit" class="btn-pinjam" style="width: 100%; border: none; cursor: pointer; padding: 12px; border-radius: 10px; font-weight: 700; background-color: #7dd3fc; color: #0f172a;">
+                Lunasi Denda
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID').format(number);
+    }
+
+    function openDendaModal(item) {
+        document.getElementById('dm-id').value = item.id;
+        document.getElementById('dm-peminjam').innerText = item.user;
+        document.getElementById('dm-alat').innerText = item.alat;
+        document.getElementById('dm-jenis').innerText = item.jenis;
+        document.getElementById('dm-total').innerText = 'Rp ' + formatRupiah(item.denda);
+        
+        document.getElementById('dendaModal').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDendaModal() {
+        document.getElementById('dendaModal').classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('dendaModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeDendaModal();
+        }
+    });
+</script>
