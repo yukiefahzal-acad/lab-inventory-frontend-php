@@ -128,6 +128,9 @@ foreach ($all_loans as $loan) {
         $mapped_loan['status'] = 'Belum Lunas';
         $mapped_loan['denda'] = floatval($denda_info['jumlah_denda'] ?? $denda_info['denda'] ?? 0);
         $mapped_loan['denda_id'] = $denda_info['id'] ?? null;
+    } elseif ($mapped_loan['terlambat'] > 0 && ($mapped_loan['status'] === 'Dipinjam' || $mapped_loan['status'] === 'Disetujui')) {
+        $mapped_loan['status'] = 'Belum Lunas';
+        $mapped_loan['denda'] = $mapped_loan['terlambat'] * 10000;
     }
 
     if ($mapped_loan['status'] === 'Menunggu') {
@@ -188,6 +191,7 @@ foreach ($all_loans as $loan) {
                 <div>Alat</div>
                 <div></div>
                 <div>Peminjam</div>
+                <div>Tanggal</div>
                 <div>Jumlah</div>
                 <div>Status / Aksi</div>
             </div>
@@ -206,6 +210,10 @@ foreach ($all_loans as $loan) {
                         </div>
                     </div>
                     <div class="data-text"><?= htmlspecialchars($pending['user_nama']) ?></div>
+                    <div class="data-text" style="font-size: 12px;">
+                        <div style="color: #64748b;">Pinjam: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($pending['tgl_pinjam'])) ?></span></div>
+                        <div style="color: #64748b;">Kembali: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($pending['tgl_kembali'])) ?></span></div>
+                    </div>
                     <div class="data-text"><?= htmlspecialchars($pending['jumlah']) ?> Unit</div>
                     <div>
                         <?php if ($role === 'admin'): ?>
@@ -231,6 +239,7 @@ foreach ($all_loans as $loan) {
                 <div>Alat</div>
                 <div></div>
                 <div>Peminjam</div>
+                <div>Tanggal</div>
                 <div>Keterangan</div>
                 <div>Status</div>
             </div>
@@ -249,17 +258,18 @@ foreach ($all_loans as $loan) {
                         </div>
                     </div>
                     <div class="data-text"><?= htmlspecialchars($loan['user_nama']) ?></div>
+                    <div class="data-text" style="font-size: 12px;">
+                        <div style="color: #64748b;">Pinjam: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tgl_pinjam'])) ?></span></div>
+                        <div style="color: #64748b;">Kembali: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tgl_kembali'])) ?></span></div>
+                    </div>
                     <div class="data-text">
                         <?php if ($loan['status'] === 'Aktif'): ?>
-                            <?php if ($loan['terlambat'] > 0): ?>
-                                <span style="color: #ff9800; font-weight: 600;">Terlambat: <?= htmlspecialchars($loan['terlambat']) ?>
-                                    Hari</span>
-                            <?php else: ?>
-                                <span style="color: #10b981; font-weight: 600;">Berlangsung</span>
-                            <?php endif; ?>
+                            <span style="color: #10b981; font-weight: 600;">Berlangsung</span>
                         <?php elseif ($loan['status'] === 'Belum Lunas'): ?>
-                            <span style="color: #ef4444; font-weight: 600;">Denda: Rp
-                                <?= number_format($loan['denda'], 0, ',', '.') ?></span>
+                            <?php if ($loan['terlambat'] > 0): ?>
+                                <span style="color: #ff9800; font-weight: 600;">Terlambat <?= htmlspecialchars($loan['terlambat']) ?> Hari</span><br>
+                            <?php endif; ?>
+                            <span style="color: #ef4444; font-weight: 600;">Denda Rp. <?= number_format($loan['denda'], 0, ',', '.') ?></span>
                         <?php elseif ($loan['status'] === 'Ditolak'): ?>
                             <span
                                 style="color: #ef4444; font-weight: 600; font-size: 12px;"><?= htmlspecialchars($loan['catatan']) ?></span>

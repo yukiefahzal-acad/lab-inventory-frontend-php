@@ -812,7 +812,7 @@ body {
 /* HEADER SUB-JUDUL DI ATAS DATA */
 .list-header-row {
     display: grid !important;
-    grid-template-columns: 80px 2fr 2fr 1fr 1.5fr !important;
+    grid-template-columns: 80px 1.5fr 1.5fr 1.5fr 1.5fr 1.5fr !important;
     /* Proporsi pembagian kolom */
     padding: 12px 24px !important;
     color: #64748b;
@@ -825,7 +825,7 @@ body {
 /* BARIS DATA ROW */
 .list-item-row {
     display: grid !important;
-    grid-template-columns: 80px 2fr 2fr 1fr 1.5fr !important;
+    grid-template-columns: 80px 1.5fr 1.5fr 1.5fr 1.5fr 1.5fr !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(15, 23, 42, 0.03) !important;

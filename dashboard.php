@@ -122,19 +122,20 @@ foreach ($denda_list as $denda) {
                 <?php else: ?>
                     <div
                         style="display: flex; width: 100%; padding: 0 20px 10px; font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase;">
-                        <div style="width: 20%;">Tanggal</div>
+                        <div style="width: 30%;">Tanggal</div>
                         <div style="width: 40%;">Nama Alat / Peminjam</div>
-                        <div style="width: 40%;">Status</div>
+                        <div style="width: 30%;">Status</div>
                     </div>
                     <?php foreach ($pinjaman_aktif_admin as $loan): ?>
                         <div class="card-item" style="display: flex; align-items: center; padding: 15px 20px; margin-bottom: 8px;">
-                            <div style="width: 20%;">
-                                <?= date('d/m/Y', strtotime($loan['tanggal_kembali_rencana'] ?? $loan['tgl_kembali'] ?? 'now')) ?>
+                            <div style="width: 30%; font-size: 12px;">
+                                <div style="color: #64748b;">Pinjam: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tanggal_pinjam'] ?? $loan['tgl_pinjam'] ?? 'now')) ?></span></div>
+                                <div style="color: #64748b;">Kembali: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tanggal_kembali_rencana'] ?? $loan['tgl_kembali'] ?? 'now')) ?></span></div>
                             </div>
                             <div style="width: 40%;">
                                 <strong><?= htmlspecialchars($loan['nama_alat'] ?? 'Unknown') ?></strong><br><small><?= htmlspecialchars($loan['user_nama'] ?? $loan['nama_user'] ?? 'User') ?></small>
                             </div>
-                            <div style="width: 40%;"><span class="status status-success">Aktif</span></div>
+                            <div style="width: 30%;"><span class="status status-success">Aktif</span></div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
