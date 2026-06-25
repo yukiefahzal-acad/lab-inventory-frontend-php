@@ -211,8 +211,12 @@ foreach ($all_loans as $loan) {
                     </div>
                     <div class="data-text"><?= htmlspecialchars($pending['user_nama']) ?></div>
                     <div class="data-text" style="font-size: 12px;">
-                        <div style="color: #64748b;">Pinjam: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($pending['tgl_pinjam'])) ?></span></div>
-                        <div style="color: #64748b;">Kembali: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($pending['tgl_kembali'])) ?></span></div>
+                        <div style="color: #64748b;">Pinjam: <span
+                                style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($pending['tgl_pinjam'])) ?></span>
+                        </div>
+                        <div style="color: #64748b;">Kembali: <span
+                                style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($pending['tgl_kembali'])) ?></span>
+                        </div>
                     </div>
                     <div class="data-text"><?= htmlspecialchars($pending['jumlah']) ?> Unit</div>
                     <div>
@@ -224,7 +228,9 @@ foreach ($all_loans as $loan) {
                     </div>
                 </div>
             <?php endforeach; ?>
-            <div class="no-data-msg" style="display: none; text-align: center; padding: 20px; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 4px 12px rgba(15,23,42,0.03); margin-top: 10px;">Data pencarian tidak ditemukan.</div>
+            <div class="no-data-msg"
+                style="display: none; text-align: center; padding: 20px; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 4px 12px rgba(15,23,42,0.03); margin-top: 10px;">
+                Data pencarian tidak ditemukan.</div>
         </div>
     <?php endif; ?>
 
@@ -259,17 +265,23 @@ foreach ($all_loans as $loan) {
                     </div>
                     <div class="data-text"><?= htmlspecialchars($loan['user_nama']) ?></div>
                     <div class="data-text" style="font-size: 12px;">
-                        <div style="color: #64748b;">Pinjam: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tgl_pinjam'])) ?></span></div>
-                        <div style="color: #64748b;">Kembali: <span style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tgl_kembali'])) ?></span></div>
+                        <div style="color: #64748b;">Pinjam: <span
+                                style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tgl_pinjam'])) ?></span>
+                        </div>
+                        <div style="color: #64748b;">Kembali: <span
+                                style="color:#0f172a; font-weight:600;"><?= date('d/m/Y', strtotime($loan['tgl_kembali'])) ?></span>
+                        </div>
                     </div>
                     <div class="data-text">
                         <?php if ($loan['status'] === 'Aktif'): ?>
                             <span style="color: #10b981; font-weight: 600;">Berlangsung</span>
                         <?php elseif ($loan['status'] === 'Belum Lunas'): ?>
                             <?php if ($loan['terlambat'] > 0): ?>
-                                <span style="color: #ff9800; font-weight: 600;">Terlambat <?= htmlspecialchars($loan['terlambat']) ?> Hari</span><br>
+                                <span style="color: #ff9800; font-weight: 600;">Terlambat <?= htmlspecialchars($loan['terlambat']) ?>
+                                    Hari</span><br>
                             <?php endif; ?>
-                            <span style="color: #ef4444; font-weight: 600;">Denda Rp. <?= number_format($loan['denda'], 0, ',', '.') ?></span>
+                            <span style="color: #ef4444; font-weight: 600;">Denda Rp.
+                                <?= number_format($loan['denda'], 0, ',', '.') ?></span>
                         <?php elseif ($loan['status'] === 'Ditolak'): ?>
                             <span
                                 style="color: #ef4444; font-weight: 600; font-size: 12px;"><?= htmlspecialchars($loan['catatan']) ?></span>
@@ -289,13 +301,13 @@ foreach ($all_loans as $loan) {
                         ?>
                         <span class="badge <?= $badge_class ?>"><?= htmlspecialchars($loan['status']) ?></span>
 
-                        <?php if ($loan['status'] !== 'Selesai' && $loan['status'] !== 'Ditolak' && $role === 'admin'): ?>
-                            <button class="btn-detail-table">Detail</button>
-                        <?php endif; ?>
+                        <button class="btn-detail-table">Detail</button>
                     </div>
                 </div>
             <?php endforeach; ?>
-            <div class="no-data-msg" style="display: none; text-align: center; padding: 20px; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 4px 12px rgba(15,23,42,0.03); margin-top: 10px;">Data pencarian tidak ditemukan.</div>
+            <div class="no-data-msg"
+                style="display: none; text-align: center; padding: 20px; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01), 0 4px 12px rgba(15,23,42,0.03); margin-top: 10px;">
+                Data pencarian tidak ditemukan.</div>
         </div>
     <?php endif; ?>
 
@@ -392,12 +404,15 @@ foreach ($all_loans as $loan) {
                 <div style="display: flex; margin-bottom: 8px; align-items: flex-start;">
                     <div style="width: 130px; font-weight: bold;">Status</div>
                     <div style="margin-right: 10px;">:</div>
-                    <div style="flex: 1; text-align: right;"><span id="p-modal-status" style="font-weight: 800;"></span></div>
+                    <div style="flex: 1; text-align: right;"><span id="p-modal-status" style="font-weight: 800;"></span>
+                    </div>
                 </div>
-                <div id="p-modal-denda-container" style="display: none; margin-bottom: 8px; align-items: flex-start; color: #ef4444;">
+                <div id="p-modal-denda-container"
+                    style="display: none; margin-bottom: 8px; align-items: flex-start; color: #ef4444;">
                     <div style="width: 130px; font-weight: bold;">Total Denda</div>
                     <div style="margin-right: 10px;">:</div>
-                    <div style="flex: 1; text-align: right; font-weight: bold;">Rp <span id="p-modal-denda"></span></div>
+                    <div style="flex: 1; text-align: right; font-weight: bold;">Rp <span id="p-modal-denda"></span>
+                    </div>
                 </div>
             </div>
             <form method="POST" action="peminjaman.php" id="p-modal-form" style="display: none;">
@@ -541,11 +556,11 @@ foreach ($all_loans as $loan) {
     function filterRiwayat() {
         let input = document.getElementById('searchInputRiwayat').value.toLowerCase();
         let lists = document.querySelectorAll('.list-ke-bawah-container');
-        
-        lists.forEach(function(list) {
+
+        lists.forEach(function (list) {
             let items = list.querySelectorAll('.list-item-row');
             let hasVisible = false;
-            
+
             items.forEach(function (item) {
                 let text = item.innerText.toLowerCase();
                 if (text.includes(input)) {
@@ -555,7 +570,7 @@ foreach ($all_loans as $loan) {
                     item.style.setProperty('display', 'none', 'important');
                 }
             });
-            
+
             let noDataMsg = list.querySelector('.no-data-msg');
             if (noDataMsg) {
                 if (!hasVisible && items.length > 0) {

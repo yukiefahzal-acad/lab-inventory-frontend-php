@@ -135,7 +135,7 @@ foreach ($denda_list as $denda) {
                             <div style="width: 40%;">
                                 <strong><?= htmlspecialchars($loan['nama_alat'] ?? 'Unknown') ?></strong><br><small><?= htmlspecialchars($loan['user_nama'] ?? $loan['nama_user'] ?? 'User') ?></small>
                             </div>
-                            <div style="width: 30%;"><span class="status status-success">Aktif</span></div>
+                            <div style="width: 30%;"><span class="badge badge-active">Aktif</span></div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
